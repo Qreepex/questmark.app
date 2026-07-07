@@ -24,30 +24,39 @@
 	let markerLayer: import('leaflet').LayerGroup | null = null;
 	let leafletModule: typeof import('leaflet') | null = null;
 
-	onMount(async () => {
-		leafletModule = await import('leaflet');
+	onMount(() => {
+		let active = true;
 
-		if (!container) {
-			return;
-		}
+		const initializeMap = async () => {
+			leafletModule = await import('leaflet');
 
-		map = leafletModule
-			.map(container, { zoomControl: false, preferCanvas: true })
-			.setView([20, 0], 2);
-		leafletModule
-			.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-				attribution: '&copy; OpenStreetMap contributors'
-			})
-			.addTo(map);
-		markerLayer = leafletModule.layerGroup().addTo(map);
+			if (!active || !container) {
+				return;
+			}
 
-		map.on('click', (event) => {
-			onPick({ latitude: event.latlng.lat, longitude: event.latlng.lng });
-		});
+			map = leafletModule
+				.map(container, { zoomControl: false, preferCanvas: true })
+				.setView([20, 0], 2);
+			leafletModule
+				.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+					attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+					subdomains: 'abcd',
+					maxZoom: 20
+				})
+				.addTo(map);
+			markerLayer = leafletModule.layerGroup().addTo(map);
 
-		renderLayers();
+			map.on('click', (event) => {
+				onPick({ latitude: event.latlng.lat, longitude: event.latlng.lng });
+			});
+
+			renderLayers();
+		};
+
+		void initializeMap();
 
 		return () => {
+			active = false;
 			map?.remove();
 			map = null;
 			markerLayer = null;
@@ -121,7 +130,4 @@
 	});
 </script>
 
-<div
-	bind:this={container}
-	class="h-full min-h-[420px] w-full rounded-[2rem] border border-white/10 bg-slate-950/70 shadow-2xl shadow-slate-950/40"
-></div>
+<div bind:this={container} class="relative z-0 h-full w-full bg-slate-950"></div>

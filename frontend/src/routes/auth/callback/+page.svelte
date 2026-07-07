@@ -36,7 +36,7 @@
 
 <main class="flex min-h-screen items-center justify-center px-6 text-center">
 	<div
-		class="max-w-md rounded-[2rem] border border-white/10 bg-[var(--panel)] p-8 shadow-2xl shadow-slate-950/40 backdrop-blur"
+		class="max-w-md rounded-4xl border border-white/10 bg-(--panel) p-8 shadow-2xl shadow-slate-950/40 backdrop-blur"
 	>
 		<p class="text-sm uppercase tracking-[0.4em] text-cyan-300">Want To Go</p>
 		<h1 class="mt-4 text-3xl font-semibold text-white">{status}</h1>

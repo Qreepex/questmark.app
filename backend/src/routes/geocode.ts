@@ -16,13 +16,20 @@ geocodeRouter.get('/search', async (request, response) => {
   searchUrl.searchParams.set('limit', '8');
   searchUrl.searchParams.set('q', query);
 
+  // TODO: cache / rate limit
+
   const upstreamResponse = await fetch(searchUrl, {
     headers: {
-      accept: 'application/json'
+      accept: 'application/json',
+      'user-agent': 'WantToGo/1.0 (https://go.schiemann.work)',
+      "Referer": "https://go.schiemann.work"
     }
   });
 
   if (!upstreamResponse.ok) {
+    const body = await upstreamResponse.text();
+    console.error(`Geocoding service failed: ${upstreamResponse.status} ${upstreamResponse.statusText} - ${body}`);
+
     response.status(502).json({ error: 'Geocoding service failed' });
     return;
   }
