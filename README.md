@@ -12,6 +12,9 @@
 - gewichtung 1-10 der places
 - Bild und Region/Land bei gespeicherten places anzeigen
 - cache in geocode
+- Spinner wenn /app geladen wird
+- Landing Page
+- legal pages
 
 ## Bugs
 
