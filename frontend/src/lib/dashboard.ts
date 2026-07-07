@@ -42,9 +42,9 @@ export function createPlaceDraft(
   };
 }
 
-export function createPinnedSelection(latitude: number, longitude: number): MapSelection {
+export function createPinnedSelection(latitude: number, longitude: number, name = 'New place'): MapSelection {
   return {
-    name: 'New place',
+    name,
     displayName: 'Dropped pin',
     latitude,
     longitude

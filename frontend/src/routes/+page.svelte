@@ -7,6 +7,7 @@
 		fetchPlaces,
 		getStoredToken,
 		loginUrl,
+		reverseGeocodeLocation,
 		searchLocations,
 		updatePlace
 	} from '$lib/api';
@@ -149,13 +150,26 @@
 		statusMessage = null;
 	}
 
-	function pickMapLocation(selection: { latitude: number; longitude: number }) {
-		openEditor(
-			createPinnedSelection(selection.latitude, selection.longitude),
-			'create',
-			createEmptyPlaceDraft()
-		);
+	async function pickMapLocation(selection: { latitude: number; longitude: number }) {
 		statusMessage = null;
+
+		let defaultName = 'New place';
+
+		try {
+			const location = await reverseGeocodeLocation(selection.latitude, selection.longitude);
+			defaultName = location.name;
+		} catch {
+			defaultName = 'New place';
+		}
+
+		openEditor(
+			createPinnedSelection(selection.latitude, selection.longitude, defaultName),
+			'create',
+			{
+				...createEmptyPlaceDraft(),
+				name: defaultName
+			}
+		);
 	}
 
 	function startEdit(place: PlaceRecord) {
