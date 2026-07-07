@@ -1,9 +1,13 @@
 <script lang="ts">
-	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import './layout.css';
 
 	let { children } = $props();
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
+<svelte:head>
+	<title>Want To Go</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="icon" href={favicon} />
+</svelte:head>
 {@render children()}
