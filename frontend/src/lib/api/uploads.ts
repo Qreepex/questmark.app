@@ -15,6 +15,6 @@ export async function uploadImage(token: string, file: File | Blob): Promise<str
 		throw new Error(errorBody?.error ?? `Upload failed with status ${response.status}`);
 	}
 
-	const result = (await response.json()) as { key: string };
-	return result.key;
+	const result = (await response.json()) as { url: string };
+	return result.url;
 }

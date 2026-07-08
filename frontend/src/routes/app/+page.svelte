@@ -5,10 +5,11 @@
 	import PageShell from '$lib/components/layout/PageShell.svelte';
 	import MapSearchPanel from '$lib/components/MapSearchPanel.svelte';
 	import PlaceEditorPanel from '$lib/components/PlaceEditorPanel.svelte';
+	import PlaceViewerPanel from '$lib/components/PlaceViewerPanel.svelte';
 	import PlacesSidebar from '$lib/components/PlacesSidebar.svelte';
 	import StatusToast from '$lib/components/StatusToast.svelte';
 	import UserMenu from '$lib/components/UserMenu.svelte';
-	import { initDashboard, pickMapLocation } from '$lib/dashboard/actions';
+	import { initDashboard, pickMapLocation, viewPlace } from '$lib/dashboard/actions';
 	import { placeEditor } from '$lib/state/placeEditor.svelte';
 	import { placesStore } from '$lib/state/places.svelte';
 	import { session } from '$lib/state/session.svelte';
@@ -32,7 +33,12 @@
 {:else}
 	<PageShell>
 		{#snippet background()}
-			<LeafletMap places={placesStore.items} selection={placeEditor.selection} onPick={pickMapLocation} />
+			<LeafletMap
+				places={placesStore.items}
+				selection={placeEditor.selection}
+				onPick={pickMapLocation}
+				onSelectPlace={viewPlace}
+			/>
 		{/snippet}
 
 		<StatusToast />
@@ -44,5 +50,6 @@
 
 		<UserMenu />
 		<PlaceEditorPanel />
+		<PlaceViewerPanel />
 	</PageShell>
 {/if}

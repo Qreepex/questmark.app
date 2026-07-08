@@ -4,6 +4,7 @@ import { createPinnedSelection, createPlaceDraft } from '$lib/dashboard/helpers'
 import { locationSearch } from '$lib/state/locationSearch.svelte';
 import { placeEditor } from '$lib/state/placeEditor.svelte';
 import { placesStore } from '$lib/state/places.svelte';
+import { placeViewer } from '$lib/state/placeViewer.svelte';
 import { session } from '$lib/state/session.svelte';
 import { statusStore } from '$lib/state/status.svelte';
 import type { PlaceRecord, PlaceSearchResult } from '$lib/types';
@@ -34,6 +35,7 @@ export function signOut(): void {
 }
 
 export function selectSearchResult(result: PlaceSearchResult): void {
+	placeViewer.close();
 	placeEditor.openForCreate(result, createPlaceDraft(result));
 	locationSearch.query = result.displayName;
 	locationSearch.results = [];
@@ -41,6 +43,7 @@ export function selectSearchResult(result: PlaceSearchResult): void {
 }
 
 export async function pickMapLocation(selection: { latitude: number; longitude: number }): Promise<void> {
+	placeViewer.close();
 	statusStore.clear();
 
 	let defaultName = 'New place';
@@ -59,12 +62,30 @@ export async function pickMapLocation(selection: { latitude: number; longitude: 
 }
 
 export function startEdit(place: PlaceRecord): void {
+	placeViewer.close();
 	placeEditor.openForEdit(place);
 	statusStore.clear();
 }
 
 export function closeEditor(): void {
 	placeEditor.close();
+}
+
+export function viewPlace(place: PlaceRecord): void {
+	placeEditor.close();
+	void placeViewer.open(place);
+}
+
+export function closeViewer(): void {
+	placeViewer.close();
+}
+
+export function editViewedPlace(): void {
+	if (!placeViewer.place) {
+		return;
+	}
+
+	startEdit(placeViewer.place);
 }
 
 export async function savePlace(): Promise<void> {
@@ -111,6 +132,10 @@ export async function removePlace(place: PlaceRecord): Promise<void> {
 
 		if (placeEditor.matchesSelection(place) || placeEditor.isEditing(place.id)) {
 			placeEditor.close();
+		}
+
+		if (placeViewer.place?.id === place.id) {
+			placeViewer.close();
 		}
 
 		statusStore.show('Removed place.');

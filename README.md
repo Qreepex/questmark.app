@@ -2,9 +2,7 @@
 
 ## Missing Features
 
-- proper notification toast that vanishes after a few seconds
-
-- Rate Limits
+- Rate Limits / File Size limits
   - Geocode
     - 1req/user/s -> 10s
     - 5req/user/15s -> 30s
@@ -17,7 +15,7 @@
     - 10req/ip/s -> 10s
     - 20req/ip/15s -> 5m
   
-- Bild und Region/Land bei gespeicherten places anzeigen
+- pen icon to edit a saved place in the map view
 - Delete mit ins Edit Menu
 - Confirm Delete when deleting a saved place (modal)
 - Filter nach Länder, Kontinente, Liste
@@ -33,6 +31,8 @@
 
 - Tags for saved places
 - gewichtung der places
+
+- Themes
 
 ## Bugs
 

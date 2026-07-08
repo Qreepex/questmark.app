@@ -2,8 +2,8 @@ export function getCoordinatesCacheKey(
   latitude: number,
   longitude: number,
 ): string {
-  const fixedLat = latitude.toFixed(3);
-  const fixedLng = longitude.toFixed(3);
+  const fixedLat = roundCoordinate(latitude);
+  const fixedLng = roundCoordinate(longitude);
 
   return `geo:coords:${fixedLat}:${fixedLng}`;
 }
@@ -15,8 +15,12 @@ export function getGeocodeCacheKey(query: string): string {
 
 
 export function getCoordinatesDataKey(latitude: number, longitude: number): string {
-  const fixedLat = latitude.toFixed(3);
-  const fixedLng = longitude.toFixed(3);
+  const fixedLat = roundCoordinate(latitude);
+  const fixedLng = roundCoordinate(longitude);
 
   return `${fixedLat}:${fixedLng}`;
+}
+
+export function roundCoordinate(coordinate: number): number {
+  return Number(coordinate.toFixed(4));
 }

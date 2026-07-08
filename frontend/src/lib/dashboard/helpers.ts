@@ -108,3 +108,31 @@ export function appendLines(existing: string, values: string[]): string {
 
 	return lines.join('\n');
 }
+
+export function removeLine(existing: string, value: string): string {
+	return existing
+		.split('\n')
+		.map((line) => line.trim())
+		.filter((line) => line && line !== value)
+		.join('\n');
+}
+
+export function getUrlDomain(url: string): string {
+	try {
+		return new URL(url).hostname.replace(/^www\./, '');
+	} catch {
+		return url;
+	}
+}
+
+export function countryCodeToFlagEmoji(countryCode: string | null | undefined): string | null {
+	if (!countryCode || countryCode.length !== 2) {
+		return null;
+	}
+
+	const codePoints = [...countryCode.toUpperCase()].map(
+		(char) => 127397 + char.charCodeAt(0)
+	);
+
+	return String.fromCodePoint(...codePoints);
+}

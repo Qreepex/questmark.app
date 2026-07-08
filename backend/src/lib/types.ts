@@ -15,6 +15,7 @@ export type NominatimAddress = {
   region?: string;
   province?: string;
   country?: string;
+  country_code?: string;
 };
 
 export type UnifiedGeocodeResult = {
@@ -22,4 +23,5 @@ export type UnifiedGeocodeResult = {
   displayName: string;
   latitude: number;
   longitude: number;
+  countryCode?: string;
 };

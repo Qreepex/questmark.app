@@ -1,11 +1,17 @@
 <script lang="ts">
+	import { uploadImage } from '$lib/api';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Panel from '$lib/components/ui/Panel.svelte';
 	import TextArea from '$lib/components/ui/TextArea.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
-	import { uploadImage } from '$lib/api';
 	import { closeEditor, savePlace } from '$lib/dashboard/actions';
-	import { appendLines, extractUrls, formatCoordinate } from '$lib/dashboard/helpers';
+	import {
+		appendLines,
+		extractUrls,
+		formatCoordinate,
+		parseUrlList,
+		removeLine
+	} from '$lib/dashboard/helpers';
 	import { placeEditor } from '$lib/state/placeEditor.svelte';
 	import { session } from '$lib/state/session.svelte';
 	import { statusStore } from '$lib/state/status.svelte';
@@ -14,7 +20,10 @@
 		placeEditor.selection?.displayName ?? placeEditor.selection?.name ?? 'Pinned location'
 	);
 
+	const images = $derived(parseUrlList(placeEditor.draft.imageUrls) ?? []);
+
 	let isUploadingImage = $state(false);
+	let fileInput = $state<HTMLInputElement | null>(null);
 
 	async function handlePaste(event: ClipboardEvent) {
 		const clipboardData = event.clipboardData;
@@ -76,12 +85,26 @@
 		statusStore.clear();
 
 		try {
-			const key = await uploadImage(session.token, file);
-			placeEditor.draft.imageUrls = appendLines(placeEditor.draft.imageUrls, [key]);
+			const imageUrl = await uploadImage(session.token, file);
+			placeEditor.draft.imageUrls = appendLines(placeEditor.draft.imageUrls, [imageUrl]);
 		} catch (error) {
 			statusStore.show(error instanceof Error ? error.message : 'Unable to upload image');
 		} finally {
 			isUploadingImage = false;
+		}
+	}
+
+	function removeImage(imageUrl: string): void {
+		placeEditor.draft.imageUrls = removeLine(placeEditor.draft.imageUrls, imageUrl);
+	}
+
+	async function handleImageFileSelect(event: Event): Promise<void> {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0] ?? null;
+		input.value = '';
+
+		if (file) {
+			await uploadPastedImage(file);
 		}
 	}
 </script>
@@ -99,9 +122,9 @@
 					</p>
 					<h2 class="mt-1 text-lg font-semibold text-(--text)">{previewTitle}</h2>
 					<p class="mt-1 text-xs text-(--muted-dim)">
-						{formatCoordinate(placeEditor.selection.latitude, 5)}, {formatCoordinate(
+						{formatCoordinate(placeEditor.selection.latitude, 4)}, {formatCoordinate(
 							placeEditor.selection.longitude,
-							5
+							4
 						)}
 					</p>
 				</div>
@@ -123,31 +146,57 @@
 					bind:value={placeEditor.draft.description}
 					placeholder="Why is this on your list? Paste text or images here."
 				/>
-				<div class="grid gap-3 sm:grid-cols-2">
-					<div data-paste-passthrough>
-						<TextArea
-							label="Image URLs"
-							bind:value={placeEditor.draft.imageUrls}
-							placeholder="One URL per line"
-						/>
+				<div>
+					<span class="text-xs tracking-wide text-(--muted)">Images</span>
+					<div class="mt-1.5 grid grid-cols-4 gap-2">
+						{#each images as imageUrl (imageUrl)}
+							<div
+								class="group relative aspect-square overflow-hidden rounded-lg border border-(--border)"
+							>
+								<img src={imageUrl} alt="" class="h-full w-full object-cover" />
+								<button
+									type="button"
+									onclick={() => removeImage(imageUrl)}
+									aria-label="Remove image"
+									class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs leading-none text-white opacity-0 transition group-hover:opacity-100"
+								>
+									×
+								</button>
+							</div>
+						{/each}
+						<button
+							type="button"
+							onclick={() => fileInput?.click()}
+							disabled={isUploadingImage}
+							class="flex aspect-square items-center justify-center rounded-lg border border-dashed border-(--border) text-xs text-(--muted-dim) transition hover:border-(--border-strong) hover:text-(--text) disabled:opacity-60"
+						>
+							{isUploadingImage ? '…' : '+ Add'}
+						</button>
 					</div>
-					<div data-paste-passthrough>
-						<TextArea
-							label="Social URLs"
-							bind:value={placeEditor.draft.socialUrls}
-							placeholder="TikTok, Instagram, or a post link"
-						/>
-					</div>
+					<input
+						bind:this={fileInput}
+						type="file"
+						accept="image/*"
+						class="hidden"
+						onchange={handleImageFileSelect}
+					/>
+				</div>
+				<div data-paste-passthrough>
+					<TextArea
+						label="Social URLs"
+						bind:value={placeEditor.draft.socialUrls}
+						placeholder="TikTok, Instagram, or a post link"
+					/>
 				</div>
 				{#if isUploadingImage}
-					<p class="text-xs text-(--muted-dim)">Uploading pasted image…</p>
+					<p class="text-xs text-(--muted-dim)">Uploading image…</p>
 				{/if}
-				<Button
-					onclick={savePlace}
-					disabled={placeEditor.isSaving}
-					class="mt-1 w-full"
-				>
-					{placeEditor.isSaving ? 'Saving…' : placeEditor.mode === 'edit' ? 'Update place' : 'Save place'}
+				<Button onclick={savePlace} disabled={placeEditor.isSaving} class="mt-1 w-full">
+					{placeEditor.isSaving
+						? 'Saving…'
+						: placeEditor.mode === 'edit'
+							? 'Update place'
+							: 'Save place'}
 				</Button>
 			</div>
 		</Panel>

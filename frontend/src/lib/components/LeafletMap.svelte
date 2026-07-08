@@ -12,11 +12,13 @@
 	let {
 		places = [],
 		selection = null,
-		onPick = () => {}
+		onPick = () => {},
+		onSelectPlace = () => {}
 	} = $props<{
 		places?: PlaceRecord[];
 		selection?: MapSelection;
 		onPick?: (selection: { latitude: number; longitude: number }) => void;
+		onSelectPlace?: (place: PlaceRecord) => void;
 	}>();
 
 	let container: HTMLDivElement | null = null;
@@ -100,7 +102,7 @@
 			const marker = leafletModule
 				.marker([place.latitude, place.longitude], { icon })
 				.addTo(markerLayer);
-			marker.bindPopup(`<strong>${escapeHtml(place.name)}</strong>`);
+			marker.on('click', () => onSelectPlace(place));
 			bounds.extend([place.latitude, place.longitude]);
 		}
 
@@ -141,20 +143,3 @@
 </script>
 
 <div bind:this={container} class="relative z-0 h-full w-full bg-(--ink)"></div>
-
-<style>
-	:global(.leaflet-popup-content-wrapper),
-	:global(.leaflet-popup-tip) {
-		background: var(--surface);
-		color: var(--text);
-	}
-
-	:global(.leaflet-popup-content-wrapper) {
-		border-radius: 0.75rem;
-		box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-	}
-
-	:global(.leaflet-container a.leaflet-popup-close-button) {
-		color: var(--muted);
-	}
-</style>

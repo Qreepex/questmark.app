@@ -1,6 +1,6 @@
 import { Router } from "express";
 import redis from "../cache/client.js";
-import { getCoordinatesDataKey, getGeocodeCacheKey } from "../lib/coordinates.js";
+import { getCoordinatesDataKey, getGeocodeCacheKey, roundCoordinate } from "../lib/coordinates.js";
 import { NominatimAddress, UnifiedGeocodeResult } from "../lib/types.js";
 
 const geocodeRouter = Router();
@@ -64,6 +64,7 @@ geocodeRouter.get("/search", async (request, response) => {
           displayName: hash.displayName,
           latitude: Number(hash.latitude),
           longitude: Number(hash.longitude),
+          countryCode: hash.countryCode || undefined,
         }));
 
       if (validResults.length > 0) {
@@ -105,6 +106,7 @@ geocodeRouter.get("/search", async (request, response) => {
         displayName: entry.display_name ?? entry.name ?? query,
         latitude: Number(entry.lat),
         longitude: Number(entry.lon),
+        countryCode: entry.address?.country_code?.toUpperCase(),
       }));
     },
     // Index 1: Photon (Komoot)
@@ -131,6 +133,7 @@ geocodeRouter.get("/search", async (request, response) => {
           displayName: displayParts.join(", ") || name,
           latitude: feature.geometry.coordinates[1],
           longitude: feature.geometry.coordinates[0],
+          countryCode: props.countrycode?.toUpperCase(),
         };
       });
     },
@@ -183,6 +186,7 @@ geocodeRouter.get("/search", async (request, response) => {
         displayName: res.displayName,
         latitude: String(res.latitude),
         longitude: String(res.longitude),
+        countryCode: res.countryCode ?? "",
       });
 
       pipeline.expire(hashKey, CACHE_TTL);
@@ -201,15 +205,18 @@ geocodeRouter.get("/search", async (request, response) => {
 });
 
 geocodeRouter.get("/reverse", async (request, response) => {
-  const latitude =
+  const rawLatitude =
     typeof request.query.lat === "string" ? Number(request.query.lat) : NaN;
-  const longitude =
+  const rawLongitude =
     typeof request.query.lon === "string" ? Number(request.query.lon) : NaN;
 
-  if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+  if (Number.isNaN(rawLatitude) || Number.isNaN(rawLongitude)) {
     response.status(400).json({ error: "Latitude and longitude are required" });
     return;
   }
+
+  const latitude = roundCoordinate(rawLatitude);
+  const longitude = roundCoordinate(rawLongitude);
 
   try {
     const nearbyLocations = await redis.geosearch(
@@ -239,6 +246,7 @@ geocodeRouter.get("/reverse", async (request, response) => {
           displayName: hashData.displayName,
           latitude: Number(hashData.latitude),
           longitude: Number(hashData.longitude),
+          countryCode: hashData.countryCode || undefined,
         });
       }
     }
@@ -275,6 +283,7 @@ geocodeRouter.get("/reverse", async (request, response) => {
         displayName,
         latitude,
         longitude,
+        countryCode: entry.address?.country_code?.toUpperCase(),
       };
     },
     // Index 1: Photon (Komoot)
@@ -302,6 +311,7 @@ geocodeRouter.get("/reverse", async (request, response) => {
         displayName: displayParts.join(", ") || name,
         latitude,
         longitude,
+        countryCode: props.countrycode?.toUpperCase(),
       };
     },
   ];
@@ -348,6 +358,7 @@ geocodeRouter.get("/reverse", async (request, response) => {
       displayName: result.displayName,
       latitude: String(result.latitude),
       longitude: String(result.longitude),
+      countryCode: result.countryCode ?? "",
     });
 
     // C. TTL setzen (Bei GEO-Indizes setzt man das TTL auf den Daten-Hash.

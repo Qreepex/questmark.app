@@ -3,7 +3,7 @@ import { Router, type RequestHandler } from "express";
 import multer from "multer";
 import { db } from "../db/client.js";
 import { images } from "../db/schema.js";
-import { uploadImageToS3 } from "../lib/s3.js";
+import { getPresignedImageUrl, uploadImageToS3 } from "../lib/s3.js";
 import type { AuthenticatedRequest } from "../lib/request.js";
 import { requireAuth } from "../middleware/require-auth.js";
 
@@ -47,7 +47,8 @@ const uploadImage: RequestHandler = async (request, response) => {
   try {
     await uploadImageToS3(key, file.buffer, file.mimetype);
     await db.insert(images).values({ userId: authRequest.authUser.userId, key });
-    response.status(201).json({ key });
+    const url = await getPresignedImageUrl(key);
+    response.status(201).json({ url });
   } catch (error) {
     console.error("Failed to upload image to S3:", error);
     response.status(500).json({ error: "Unable to upload image" });
