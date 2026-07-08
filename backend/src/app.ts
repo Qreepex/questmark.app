@@ -5,6 +5,7 @@ import authRouter from "./routes/auth.js";
 import geocodeRouter from "./routes/geocode.js";
 import placesRouter from "./routes/places.js";
 import statsRouter from "./routes/stats.js";
+import uploadsRouter from "./routes/uploads.js";
 
 export function createApp() {
   const app = express();
@@ -26,6 +27,7 @@ export function createApp() {
   app.use("/geo", geocodeRouter);
   app.use("/places", placesRouter);
   app.use("/stats", statsRouter);
+  app.use("/uploads", uploadsRouter);
 
   return app;
 }

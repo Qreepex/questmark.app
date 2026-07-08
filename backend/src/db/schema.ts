@@ -31,8 +31,20 @@ export const places = pgTable("places", {
     .defaultNow(),
 });
 
+export const images = pgTable("images", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  key: text("key").notNull().unique(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const usersRelations = relations(users, ({ many }) => ({
   places: many(places),
+  images: many(images),
 }));
 
 export const placesRelations = relations(places, ({ one }) => ({
@@ -41,3 +53,12 @@ export const placesRelations = relations(places, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const imagesRelations = relations(images, ({ one }) => ({
+  user: one(users, {
+    fields: [images.userId],
+    references: [users.id],
+  }),
+}));
+
+export type Place = typeof places.$inferSelect;

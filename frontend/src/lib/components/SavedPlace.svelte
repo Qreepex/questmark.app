@@ -3,16 +3,27 @@
 	import type { PlaceRecord } from '$lib/types';
 
 	let { place } = $props<{ place: PlaceRecord }>();
+
+	const thumbnailUrl = $derived(place.imageUrls?.[0] ?? null);
 </script>
 
 <article
 	class="mb-2 rounded-xl border border-(--border) bg-white/2 px-3 py-3 transition hover:border-(--border-strong) hover:bg-white/5"
 >
 	<div class="flex items-start justify-between gap-3">
-		<div class="text-sm font-medium text-(--text)">{place.name}</div>
+		<div class="flex min-w-0 items-center gap-3">
+			{#if thumbnailUrl}
+				<img
+					src={thumbnailUrl}
+					alt=""
+					class="h-10 w-10 shrink-0 rounded-lg object-cover"
+				/>
+			{/if}
+			<div class="truncate text-sm font-medium text-(--text)">{place.name}</div>
+		</div>
 		<button
 			onclick={() => startEdit(place)}
-			class="rounded-full border border-(--border) px-2.5 py-1 text-[0.65rem] uppercase tracking-wide text-(--muted) transition hover:border-(--border-strong) hover:text-(--text)"
+			class="shrink-0 rounded-full border border-(--border) px-2.5 py-1 text-[0.65rem] uppercase tracking-wide text-(--muted) transition hover:border-(--border-strong) hover:text-(--text)"
 		>
 			Edit
 		</button>

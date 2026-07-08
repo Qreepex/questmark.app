@@ -87,8 +87,18 @@
 		const bounds = leafletModule.latLngBounds([]);
 
 		for (const place of places) {
+			const thumbnailUrl = place.imageUrls?.[0];
+			const icon = thumbnailUrl
+				? leafletModule.divIcon({
+						className: '',
+						html: `<div class="h-9 w-9 overflow-hidden rounded-full border-2 border-(--ink) bg-(--muted) shadow-md shadow-black/50"><img src="${escapeHtml(thumbnailUrl)}" class="h-full w-full object-cover" /></div>`,
+						iconSize: [36, 36],
+						iconAnchor: [18, 18]
+					})
+				: pinIcon;
+
 			const marker = leafletModule
-				.marker([place.latitude, place.longitude], { icon: pinIcon })
+				.marker([place.latitude, place.longitude], { icon })
 				.addTo(markerLayer);
 			marker.bindPopup(`<strong>${escapeHtml(place.name)}</strong>`);
 			bounds.extend([place.latitude, place.longitude]);

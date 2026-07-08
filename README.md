@@ -2,9 +2,6 @@
 
 ## Missing Features
 
-- bilder & links einfach pasten können
-- Bilder statt pins anzeigen
-
 - proper notification toast that vanishes after a few seconds
 
 - Rate Limits
@@ -32,9 +29,10 @@
 
 - Multiple Lists
 - Share lists with friends
+- Notification Bar wo dann share von anderen angezeigt wird
 
 - Tags for saved places
-- gewichtung 1-10 der places
+- gewichtung der places
 
 ## Bugs
 

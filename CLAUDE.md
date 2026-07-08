@@ -13,7 +13,7 @@
 - Users are OAuth-only identities: keep `users.id` and `users.username`, do not add email/password auth fields.
 - Places belong to one user and already support `imageUrls` and `socialUrls` as Postgres text arrays.
 - Frontend: SvelteKit + Vite + Tailwind CSS + Leaflet.
-- Frontend API helpers and auth token storage live in `frontend/src/lib/api.ts`; the token key is `want-to-go.auth-token` in `localStorage`.
+- Frontend API helpers and auth token storage live in `frontend/src/lib/api/**`; the token key is `want-to-go.auth-token` in `localStorage`.
 - Frontend routes include the landing page, `/app`, and `/auth/callback`.
 
 ## Commands

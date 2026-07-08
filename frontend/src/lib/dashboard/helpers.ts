@@ -87,3 +87,24 @@ export function parseUrlList(value: string): string[] | null {
 
 	return urls.length ? urls : null;
 }
+
+const urlPattern = /https?:\/\/[^\s]+/g;
+
+export function extractUrls(text: string): string[] {
+	return [...text.matchAll(urlPattern)].map((match) => match[0]);
+}
+
+export function appendLines(existing: string, values: string[]): string {
+	const lines = existing
+		.split('\n')
+		.map((line) => line.trim())
+		.filter(Boolean);
+
+	for (const value of values) {
+		if (!lines.includes(value)) {
+			lines.push(value);
+		}
+	}
+
+	return lines.join('\n');
+}
