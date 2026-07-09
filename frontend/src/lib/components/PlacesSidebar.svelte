@@ -44,8 +44,8 @@
 	const allTags = $derived(getAllTags(placesStore.items));
 </script>
 
-<div class="pointer-events-auto">
-	<Panel floating tight class="overflow-hidden">
+<div class="pointer-events-auto flex min-h-0 flex-1 flex-col">
+	<Panel floating tight class="flex min-h-0 flex-1 flex-col overflow-hidden">
 		<div class="flex w-full items-center justify-between gap-4 px-4 py-3 text-left">
 			<h2 class="text-base font-semibold text-(--text) whitespace-nowrap">Marked places</h2>
 			<input
@@ -92,7 +92,7 @@
 					{/each}
 				</div>
 			{/if}
-			<div class="max-h-[calc(100vh-15rem)] overflow-y-auto border-t border-(--border) p-2">
+			<div class="min-h-0 flex-1 overflow-y-auto border-t border-(--border) p-2">
 				{#each visiblePlaces as place (place.id)}
 					{#if !query || place.name.toLowerCase().includes(query.toLowerCase())}
 						<SavedPlace {place} />

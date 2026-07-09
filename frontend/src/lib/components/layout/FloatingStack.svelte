@@ -13,7 +13,7 @@
 </script>
 
 <div
-	class="pointer-events-none fixed top-4 z-1000 flex w-[min(25rem,calc(100vw-2rem))] flex-col gap-3 sm:top-6 {sideClass}"
+	class="pointer-events-none fixed top-4 bottom-4 z-1000 flex w-[min(25rem,calc(100vw-2rem))] flex-col gap-3 sm:top-6 sm:bottom-6 {sideClass}"
 >
 	{@render children()}
 </div>
