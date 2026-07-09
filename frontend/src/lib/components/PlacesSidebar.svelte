@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Select from '$lib/components/ui/Select.svelte';
-	import { CONTINENTS } from '$lib/dashboard/continents';
+	import MultiSelect from '$lib/components/ui/MultiSelect.svelte';
+	import { CONTINENTS, getContinent } from '$lib/dashboard/continents';
 	import { countryCodeToFlagEmoji, filterPlaces, getAllTags } from '$lib/dashboard/helpers';
 	import Panel from '$lib/components/ui/Panel.svelte';
 	import { listsStore } from '$lib/state/lists.svelte';
@@ -13,25 +13,33 @@
 
 	const visiblePlaces = $derived(filterPlaces(placesStore.items, placeFilters));
 
-	const listOptions = $derived([
-		{ value: '', label: 'All lists' },
-		...listsStore.items.map((list) => ({ value: list.id, label: list.name }))
-	]);
+	const listOptions = $derived(
+		listsStore.items.map((list) => ({ value: list.id, label: list.name }))
+	);
 
-	const countryOptions = $derived([
-		{ value: '', label: 'All countries' },
-		...[...new Set(placesStore.items.map((place) => place.countryCode).filter(Boolean))]
+	const countryOptions = $derived(
+		[...new Set(placesStore.items.map((place) => place.countryCode).filter(Boolean))]
 			.sort()
 			.map((code) => ({
 				value: code as string,
 				label: `${countryCodeToFlagEmoji(code) ?? ''} ${code}`.trim()
 			}))
-	]);
+	);
 
-	const continentOptions = $derived([
-		{ value: '', label: 'All continents' },
-		...CONTINENTS.map((continent) => ({ value: continent.code, label: continent.name }))
-	]);
+	const usedContinentCodes = $derived(
+		new Set(
+			placesStore.items
+				.map((place) => getContinent(place.countryCode))
+				.filter((continent): continent is string => Boolean(continent))
+		)
+	);
+
+	const continentOptions = $derived(
+		CONTINENTS.filter((continent) => usedContinentCodes.has(continent.code)).map((continent) => ({
+			value: continent.code,
+			label: continent.name
+		}))
+	);
 
 	const allTags = $derived(getAllTags(placesStore.items));
 </script>
@@ -52,23 +60,20 @@
 		</div>
 		{#if open}
 			<div class="grid grid-cols-3 gap-2 border-t border-(--border) px-3 py-2">
-				<Select
+				<MultiSelect
+					placeholder="All lists"
 					options={listOptions}
-					bind:value={() => placeFilters.listId ?? '', (value) => (placeFilters.listId = value || null)}
+					bind:value={placeFilters.listIds}
 				/>
-				<Select
+				<MultiSelect
+					placeholder="All countries"
 					options={countryOptions}
-					bind:value={
-						() => placeFilters.countryCode ?? '',
-						(value) => (placeFilters.countryCode = value || null)
-					}
+					bind:value={placeFilters.countryCodes}
 				/>
-				<Select
+				<MultiSelect
+					placeholder="All continents"
 					options={continentOptions}
-					bind:value={
-						() => placeFilters.continent ?? '',
-						(value) => (placeFilters.continent = value || null)
-					}
+					bind:value={placeFilters.continents}
 				/>
 			</div>
 			{#if allTags.length}

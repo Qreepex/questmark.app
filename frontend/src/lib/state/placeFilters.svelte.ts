@@ -1,7 +1,7 @@
 class PlaceFiltersStore {
-	listId = $state<string | null>(null);
-	countryCode = $state<string | null>(null);
-	continent = $state<string | null>(null);
+	listIds = $state<string[]>([]);
+	countryCodes = $state<string[]>([]);
+	continents = $state<string[]>([]);
 	tags = $state<string[]>([]);
 
 	toggleTag(tag: string): void {
@@ -10,10 +10,14 @@ class PlaceFiltersStore {
 			: [...this.tags, tag];
 	}
 
+	removeList(listId: string): void {
+		this.listIds = this.listIds.filter((existing) => existing !== listId);
+	}
+
 	reset(): void {
-		this.listId = null;
-		this.countryCode = null;
-		this.continent = null;
+		this.listIds = [];
+		this.countryCodes = [];
+		this.continents = [];
 		this.tags = [];
 	}
 }

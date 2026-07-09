@@ -24,11 +24,7 @@
 		role="presentation"
 		onclick={closeListManager}
 	>
-		<div
-			role="presentation"
-			onclick={(event) => event.stopPropagation()}
-			class="w-full max-w-lg"
-		>
+		<div role="presentation" onclick={(event) => event.stopPropagation()} class="w-full max-w-lg">
 			<Panel floating>
 				<div class="flex items-center justify-between gap-3">
 					<h2 class="text-lg font-semibold text-(--text)">Manage lists</h2>
@@ -63,12 +59,4 @@
 			</Panel>
 		</div>
 	</div>
-
-	<svelte:window
-		onkeydown={(event) => {
-			if (event.key === 'Escape') {
-				closeListManager();
-			}
-		}}
-	/>
 {/if}

@@ -98,23 +98,30 @@ export function buildPlacePayload(
 export function filterPlaces(
 	items: PlaceRecord[],
 	filters: {
-		listId: string | null;
-		countryCode: string | null;
-		continent: string | null;
+		listIds: string[];
+		countryCodes: string[];
+		continents: string[];
 		tags: string[];
 	}
 ): PlaceRecord[] {
 	return items.filter((place) => {
-		if (filters.listId && place.listId !== filters.listId) {
+		if (filters.listIds.length && !filters.listIds.includes(place.listId)) {
 			return false;
 		}
 
-		if (filters.countryCode && place.countryCode !== filters.countryCode) {
+		if (
+			filters.countryCodes.length &&
+			(!place.countryCode || !filters.countryCodes.includes(place.countryCode))
+		) {
 			return false;
 		}
 
-		if (filters.continent && getContinent(place.countryCode) !== filters.continent) {
-			return false;
+		if (filters.continents.length) {
+			const continent = getContinent(place.countryCode);
+
+			if (!continent || !filters.continents.includes(continent)) {
+				return false;
+			}
 		}
 
 		if (filters.tags.length && !filters.tags.some((tag) => place.tags.includes(tag))) {

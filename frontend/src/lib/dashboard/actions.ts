@@ -218,10 +218,7 @@ export async function removeList(list: ListRecord): Promise<void> {
 
 	try {
 		await listsStore.remove(session.token, list.id);
-
-		if (placeFilters.listId === list.id) {
-			placeFilters.listId = null;
-		}
+		placeFilters.removeList(list.id);
 
 		await placesStore.load(session.token);
 		statusStore.show(`Deleted "${list.name}".`);
