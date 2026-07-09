@@ -2,8 +2,11 @@ import { Router } from "express";
 import redis from "../cache/client.js";
 import { getCoordinatesDataKey, getGeocodeCacheKey, roundCoordinate } from "../lib/coordinates.js";
 import { NominatimAddress, UnifiedGeocodeResult } from "../lib/types.js";
+import { geocodeRateLimiter } from "../middleware/rate-limit.js";
 
 const geocodeRouter = Router();
+
+geocodeRouter.use(geocodeRateLimiter);
 
 const CACHE_TTL = 60 * 60 * 24 * 30; // 30 Tage in Sekunden
 

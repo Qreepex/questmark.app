@@ -1,6 +1,7 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
+import { generalRateLimiter } from "./middleware/rate-limit.js";
 import authRouter from "./routes/auth.js";
 import geocodeRouter from "./routes/geocode.js";
 import placesRouter from "./routes/places.js";
@@ -22,6 +23,8 @@ export function createApp() {
   app.get("/health", (_request, response) => {
     response.json({ ok: true });
   });
+
+  app.use(generalRateLimiter);
 
   app.use("/auth", authRouter);
   app.use("/geo", geocodeRouter);
