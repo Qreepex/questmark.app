@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Select from '$lib/components/ui/Select.svelte';
 	import { CONTINENTS } from '$lib/dashboard/continents';
-	import { countryCodeToFlagEmoji, filterPlaces } from '$lib/dashboard/helpers';
+	import { countryCodeToFlagEmoji, filterPlaces, getAllTags } from '$lib/dashboard/helpers';
 	import Panel from '$lib/components/ui/Panel.svelte';
 	import { listsStore } from '$lib/state/lists.svelte';
 	import { placeFilters } from '$lib/state/placeFilters.svelte';
@@ -32,6 +32,8 @@
 		{ value: '', label: 'All continents' },
 		...CONTINENTS.map((continent) => ({ value: continent.code, label: continent.name }))
 	]);
+
+	const allTags = $derived(getAllTags(placesStore.items));
 </script>
 
 <div class="pointer-events-auto">
@@ -69,6 +71,22 @@
 					}
 				/>
 			</div>
+			{#if allTags.length}
+				<div class="flex flex-wrap gap-1.5 border-t border-(--border) px-3 py-2">
+					{#each allTags as tag (tag)}
+						{@const isActive = placeFilters.tags.includes(tag)}
+						<button
+							type="button"
+							onclick={() => placeFilters.toggleTag(tag)}
+							class="rounded-full border px-2.5 py-0.5 text-xs transition {isActive
+								? 'border-(--accent) bg-(--accent-soft) text-(--accent-strong)'
+								: 'border-(--border) bg-white/3 text-(--muted) hover:border-(--border-strong)'}"
+						>
+							{tag}
+						</button>
+					{/each}
+				</div>
+			{/if}
 			<div class="max-h-[calc(100vh-15rem)] overflow-y-auto border-t border-(--border) p-2">
 				{#each visiblePlaces as place (place.id)}
 					{#if !query || place.name.toLowerCase().includes(query.toLowerCase())}

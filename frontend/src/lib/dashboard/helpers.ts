@@ -15,6 +15,7 @@ export type PlaceDraft = {
 	imageUrls: string;
 	socialUrls: string;
 	listId: string;
+	tags: string[];
 };
 
 export function getUserInitial(username: string | null | undefined): string {
@@ -31,12 +32,15 @@ export function createEmptyPlaceDraft(listId = ''): PlaceDraft {
 		description: '',
 		imageUrls: '',
 		socialUrls: '',
-		listId
+		listId,
+		tags: []
 	};
 }
 
 export function createPlaceDraft(
-	place: Pick<PlaceRecord, 'name' | 'description' | 'imageUrls' | 'socialUrls'> | PlaceSearchResult,
+	place:
+		| Pick<PlaceRecord, 'name' | 'description' | 'imageUrls' | 'socialUrls' | 'tags'>
+		| PlaceSearchResult,
 	listId = ''
 ): PlaceDraft {
 	return {
@@ -44,7 +48,8 @@ export function createPlaceDraft(
 		description: 'description' in place ? (place.description ?? '') : '',
 		imageUrls: 'imageUrls' in place && place.imageUrls ? place.imageUrls.join('\n') : '',
 		socialUrls: 'socialUrls' in place && place.socialUrls ? place.socialUrls.join('\n') : '',
-		listId
+		listId,
+		tags: 'tags' in place && place.tags ? [...place.tags] : []
 	};
 }
 
@@ -85,13 +90,19 @@ export function buildPlacePayload(
 		description: draft.description.trim() ? draft.description.trim() : null,
 		countryCode: selection.countryCode ?? null,
 		imageUrls: parseUrlList(draft.imageUrls),
-		socialUrls: parseUrlList(draft.socialUrls)
+		socialUrls: parseUrlList(draft.socialUrls),
+		tags: draft.tags
 	};
 }
 
 export function filterPlaces(
 	items: PlaceRecord[],
-	filters: { listId: string | null; countryCode: string | null; continent: string | null }
+	filters: {
+		listId: string | null;
+		countryCode: string | null;
+		continent: string | null;
+		tags: string[];
+	}
 ): PlaceRecord[] {
 	return items.filter((place) => {
 		if (filters.listId && place.listId !== filters.listId) {
@@ -106,8 +117,16 @@ export function filterPlaces(
 			return false;
 		}
 
+		if (filters.tags.length && !filters.tags.some((tag) => place.tags.includes(tag))) {
+			return false;
+		}
+
 		return true;
 	});
+}
+
+export function getAllTags(items: PlaceRecord[]): string[] {
+	return [...new Set(items.flatMap((place) => place.tags))].sort();
 }
 
 export function parseUrlList(value: string): string[] | null {

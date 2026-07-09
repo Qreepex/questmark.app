@@ -3,6 +3,7 @@
 	import Button from '$lib/components/ui/Button.svelte';
 	import Panel from '$lib/components/ui/Panel.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
+	import TagInput from '$lib/components/ui/TagInput.svelte';
 	import TextArea from '$lib/components/ui/TextArea.svelte';
 	import TextField from '$lib/components/ui/TextField.svelte';
 	import { closeEditor, savePlace } from '$lib/dashboard/actions';
@@ -10,11 +11,13 @@
 		appendLines,
 		extractUrls,
 		formatCoordinate,
+		getAllTags,
 		parseUrlList,
 		removeLine
 	} from '$lib/dashboard/helpers';
 	import { listsStore } from '$lib/state/lists.svelte';
 	import { placeEditor } from '$lib/state/placeEditor.svelte';
+	import { placesStore } from '$lib/state/places.svelte';
 	import { session } from '$lib/state/session.svelte';
 	import { statusStore } from '$lib/state/status.svelte';
 
@@ -195,6 +198,11 @@
 						placeholder="TikTok, Instagram, or a post link"
 					/>
 				</div>
+				<TagInput
+					label="Tags"
+					bind:value={placeEditor.draft.tags}
+					suggestions={getAllTags(placesStore.items)}
+				/>
 				{#if isUploadingImage}
 					<p class="text-xs text-(--muted-dim)">Uploading image…</p>
 				{/if}

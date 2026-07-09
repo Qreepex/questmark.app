@@ -12,6 +12,7 @@ import { cleanUpOrphanedImages } from "../lib/images.js";
 import type { AuthenticatedRequest } from "../lib/request.js";
 import { requireAuth } from "../middleware/require-auth.js";
 import { extractOwnImageKey, resolveImageDisplayUrl } from "../lib/s3.js";
+import { getPlaceTags, getTagsForPlaces, normalizeTags, setPlaceTags } from "../lib/tags.js";
 
 const placesRouter = Router();
 
@@ -89,6 +90,10 @@ async function resolvePlaceImages(place: Place): Promise<Place> {
   return { ...place, imageUrls: resolvedImageUrls };
 }
 
+function withTags(place: Place, tags: string[]): Place & { tags: string[] } {
+  return { ...place, tags };
+}
+
 const listPlaces: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
   const listIds = await getAccessibleListIds(authRequest.authUser.userId);
@@ -104,7 +109,15 @@ const listPlaces: RequestHandler = async (request, response) => {
     .where(inArray(places.listId, listIds))
     .orderBy(desc(places.createdAt));
 
-  response.json({ places: await Promise.all(savedPlaces.map(resolvePlaceImages)) });
+  const tagsByPlace = await getTagsForPlaces(savedPlaces.map((place) => place.id));
+
+  const resolvedPlaces = await Promise.all(
+    savedPlaces.map(async (place) =>
+      withTags(await resolvePlaceImages(place), tagsByPlace.get(place.id) ?? []),
+    ),
+  );
+
+  response.json({ places: resolvedPlaces });
 };
 
 const getPlaceById: RequestHandler = async (request, response) => {
@@ -126,7 +139,8 @@ const getPlaceById: RequestHandler = async (request, response) => {
     return;
   }
 
-  response.json({ place: await resolvePlaceImages(place) });
+  const tags = await getPlaceTags(place.id);
+  response.json({ place: withTags(await resolvePlaceImages(place), tags) });
 };
 
 function normalizeCountryCode(value: unknown): string | null {
@@ -151,6 +165,7 @@ const createPlace: RequestHandler = async (request, response) => {
     socialLink,
     listId,
     countryCode,
+    tags,
   } = request.body as {
     name?: unknown;
     latitude?: unknown;
@@ -162,6 +177,7 @@ const createPlace: RequestHandler = async (request, response) => {
     socialLink?: unknown;
     listId?: unknown;
     countryCode?: unknown;
+    tags?: unknown;
   };
 
   const parsedLatitude =
@@ -209,7 +225,12 @@ const createPlace: RequestHandler = async (request, response) => {
     })
     .returning();
 
-  response.status(201).json({ place: await resolvePlaceImages(createdPlace) });
+  const normalizedTags = normalizeTags(tags);
+  await setPlaceTags(createdPlace.id, normalizedTags);
+
+  response
+    .status(201)
+    .json({ place: withTags(await resolvePlaceImages(createdPlace), normalizedTags) });
 };
 
 const updatePlace: RequestHandler = async (request, response) => {
@@ -226,6 +247,7 @@ const updatePlace: RequestHandler = async (request, response) => {
     socialLink,
     listId,
     countryCode,
+    tags,
   } = request.body as {
     name?: unknown;
     latitude?: unknown;
@@ -237,6 +259,7 @@ const updatePlace: RequestHandler = async (request, response) => {
     socialLink?: unknown;
     listId?: unknown;
     countryCode?: unknown;
+    tags?: unknown;
   };
 
   const existingPlace = await db.query.places.findFirst({
@@ -309,7 +332,14 @@ const updatePlace: RequestHandler = async (request, response) => {
     .where(eq(places.id, existingPlace.id))
     .returning();
 
-  response.json({ place: await resolvePlaceImages(updatedPlace) });
+  const nextTags =
+    tags === undefined ? await getPlaceTags(existingPlace.id) : normalizeTags(tags);
+
+  if (tags !== undefined) {
+    await setPlaceTags(existingPlace.id, nextTags);
+  }
+
+  response.json({ place: withTags(await resolvePlaceImages(updatedPlace), nextTags) });
 };
 
 const deletePlace: RequestHandler = async (request, response) => {

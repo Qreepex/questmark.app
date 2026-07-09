@@ -3,6 +3,7 @@ import {
   doublePrecision,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   unique,
@@ -72,6 +73,17 @@ export const places = pgTable("places", {
     .defaultNow(),
 });
 
+export const placeTags = pgTable(
+  "place_tags",
+  {
+    placeId: uuid("place_id")
+      .notNull()
+      .references(() => places.id, { onDelete: "cascade" }),
+    tag: text("tag").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.placeId, table.tag] })],
+);
+
 export const images = pgTable("images", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id")
@@ -110,7 +122,7 @@ export const listMembersRelations = relations(listMembers, ({ one }) => ({
   }),
 }));
 
-export const placesRelations = relations(places, ({ one }) => ({
+export const placesRelations = relations(places, ({ one, many }) => ({
   user: one(users, {
     fields: [places.userId],
     references: [users.id],
@@ -118,6 +130,14 @@ export const placesRelations = relations(places, ({ one }) => ({
   list: one(lists, {
     fields: [places.listId],
     references: [lists.id],
+  }),
+  tags: many(placeTags),
+}));
+
+export const placeTagsRelations = relations(placeTags, ({ one }) => ({
+  place: one(places, {
+    fields: [placeTags.placeId],
+    references: [places.id],
   }),
 }));
 

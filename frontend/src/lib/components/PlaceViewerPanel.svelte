@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Badge from '$lib/components/ui/Badge.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import Panel from '$lib/components/ui/Panel.svelte';
 	import { closeViewer, editViewedPlace, removePlace } from '$lib/dashboard/actions';
@@ -100,6 +101,14 @@
 				<p class="mt-2 text-sm text-(--muted)">
 					{@html processedDescription}
 				</p>
+			{/if}
+
+			{#if place.tags.length}
+				<div class="mt-3 flex flex-wrap gap-1.5">
+					{#each place.tags as tag (tag)}
+						<Badge>{tag}</Badge>
+					{/each}
+				</div>
 			{/if}
 
 			{#if place.imageUrls?.length}

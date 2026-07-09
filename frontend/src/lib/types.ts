@@ -15,6 +15,7 @@ export interface PlaceRecord {
 	countryCode: string | null;
 	imageUrls: string[] | null;
 	socialUrls: string[] | null;
+	tags: string[];
 	createdAt: string;
 }
 
@@ -35,6 +36,7 @@ export interface PlacePayload {
 	countryCode?: string | null;
 	imageUrls?: string[] | null;
 	socialUrls?: string[] | null;
+	tags?: string[];
 }
 
 export type ListRole = 'owner' | 'view' | 'add' | 'edit';
