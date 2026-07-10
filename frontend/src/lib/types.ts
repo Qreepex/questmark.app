@@ -43,7 +43,7 @@ export interface PlaceSearchResult {
 	displayName: string;
 	latitude: number;
 	longitude: number;
-	countryCode?: string;
+	countryCode: string;
 }
 
 export interface PlacePayload {

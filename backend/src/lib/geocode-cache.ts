@@ -8,14 +8,17 @@ export const REVERSE_SEARCH_RADIUS_METERS = 50;
 function toGeocodeResult(
   hash: Record<string, string>,
 ): UnifiedGeocodeResult | null {
-  if (!hash.name) return null;
+  // Entries cached before the country-code guarantee (or written by a
+  // provider that couldn't resolve one) are treated as a miss so callers
+  // never see a result without a country code.
+  if (!hash.name || !hash.countryCode) return null;
 
   return {
     name: hash.name,
     displayName: hash.displayName,
     latitude: Number(hash.latitude),
     longitude: Number(hash.longitude),
-    countryCode: hash.countryCode || undefined,
+    countryCode: hash.countryCode,
   };
 }
 
@@ -102,7 +105,7 @@ function cacheLocation(
     displayName: result.displayName,
     latitude: String(result.latitude),
     longitude: String(result.longitude),
-    countryCode: result.countryCode ?? "",
+    countryCode: result.countryCode,
   });
   pipeline.expire(hashKey, CACHE_TTL_SECONDS);
 }
