@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { count, eq } from "drizzle-orm";
 import { Router, type ErrorRequestHandler, type RequestHandler } from "express";
+import { fileTypeFromBuffer } from "file-type";
 import multer, { MulterError } from "multer";
 import { db } from "../db/client.js";
 import { images } from "../db/schema.js";
@@ -67,17 +68,28 @@ const uploadImage: RequestHandler = async (request, response) => {
     return;
   }
 
-  const extension = ALLOWED_MIME_EXTENSIONS[file.mimetype];
+  const claimedExtension = ALLOWED_MIME_EXTENSIONS[file.mimetype];
 
-  if (!extension) {
+  if (!claimedExtension) {
     response.status(400).json({ error: "Unsupported image type" });
     return;
   }
 
-  const key = `places/${authRequest.authUser.userId}/${randomUUID()}.${extension}`;
+  // The client-supplied `mimetype` is just an HTTP header the caller can set to
+  // anything, so re-derive the type from the file's actual magic bytes and
+  // require it to agree with the declared allowlist before decoding it with sharp.
+  const detectedType = await fileTypeFromBuffer(file.buffer);
+  const detectedExtension = detectedType && ALLOWED_MIME_EXTENSIONS[detectedType.mime];
+
+  if (!detectedExtension) {
+    response.status(400).json({ error: "Unsupported image type" });
+    return;
+  }
+
+  const key = `places/${authRequest.authUser.userId}/${randomUUID()}.${detectedExtension}`;
 
   try {
-    const compressed = await compressImage(file.buffer, file.mimetype);
+    const compressed = await compressImage(file.buffer, detectedType.mime);
     const uploadBuffer =
       compressed.buffer.length < file.buffer.length ? compressed.buffer : file.buffer;
 

@@ -6,6 +6,8 @@ import { users } from "../db/schema.js";
 import "../env.js";
 import { signAuthToken, verifyAuthToken } from "../lib/auth.js";
 import { ensureDefaultList } from "../lib/list-access.js";
+import { oauthCallbackQuerySchema } from "../lib/validation-schemas.js";
+import { validate } from "../middleware/validate.js";
 
 const issuerDiscoveryPath = "/.well-known/openid-configuration";
 
@@ -167,92 +169,90 @@ authRouter.get("/login", async (_request, response) => {
   response.redirect(authorizationUrl.toString());
 });
 
-authRouter.get("/callback", async (request, response) => {
-  const { code, state } = request.query as { code?: string; state?: string };
-  const storedState = request.cookies["want-to-go-oauth-state"];
-  const codeVerifier = request.cookies["want-to-go-oauth-verifier"];
+authRouter.get(
+  "/callback",
+  validate({ query: oauthCallbackQuerySchema }),
+  async (request, response) => {
+    const { code, state } = request.query as unknown as { code: string; state: string };
+    const storedState = request.cookies["want-to-go-oauth-state"];
+    const codeVerifier = request.cookies["want-to-go-oauth-verifier"];
 
-  if (
-    !code ||
-    !state ||
-    !storedState ||
-    !codeVerifier ||
-    state !== storedState
-  ) {
-    response.status(400).json({ error: "Invalid OAuth callback" });
-    return;
-  }
+    if (!storedState || !codeVerifier || state !== storedState) {
+      response.status(400).json({ error: "Invalid OAuth callback" });
+      return;
+    }
 
-  const oidcConfig = await getOidcConfiguration();
-  const tokenResponse = await fetch(oidcConfig.token_endpoint, {
-    method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: getRequiredEnv("AUTHENTIK_CLIENT_ID"),
-      client_secret: getRequiredEnv("AUTHENTIK_CLIENT_SECRET"),
-      redirect_uri: getRequiredEnv("AUTHENTIK_REDIRECT_URI"),
-      code,
-      code_verifier: codeVerifier,
-    }),
-  });
+    const oidcConfig = await getOidcConfiguration();
+    const tokenResponse = await fetch(oidcConfig.token_endpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "authorization_code",
+        client_id: getRequiredEnv("AUTHENTIK_CLIENT_ID"),
+        client_secret: getRequiredEnv("AUTHENTIK_CLIENT_SECRET"),
+        redirect_uri: getRequiredEnv("AUTHENTIK_REDIRECT_URI"),
+        code,
+        code_verifier: codeVerifier,
+      }),
+    });
 
-  if (!tokenResponse.ok) {
-    response.status(502).json({ error: "OAuth token exchange failed" });
-    return;
-  }
+    if (!tokenResponse.ok) {
+      response.status(502).json({ error: "OAuth token exchange failed" });
+      return;
+    }
 
-  const tokenPayload = (await tokenResponse.json()) as {
-    access_token?: string;
-  };
+    const tokenPayload = (await tokenResponse.json()) as {
+      access_token?: string;
+    };
 
-  if (!tokenPayload.access_token) {
-    response.status(502).json({ error: "OAuth token exchange failed" });
-    return;
-  }
+    if (!tokenPayload.access_token) {
+      response.status(502).json({ error: "OAuth token exchange failed" });
+      return;
+    }
 
-  const userInfoResponse = await fetch(oidcConfig.userinfo_endpoint, {
-    headers: {
-      authorization: `Bearer ${tokenPayload.access_token}`,
-    },
-  });
+    const userInfoResponse = await fetch(oidcConfig.userinfo_endpoint, {
+      headers: {
+        authorization: `Bearer ${tokenPayload.access_token}`,
+      },
+    });
 
-  if (!userInfoResponse.ok) {
-    response.status(502).json({ error: "Unable to fetch user profile" });
-    return;
-  }
+    if (!userInfoResponse.ok) {
+      response.status(502).json({ error: "Unable to fetch user profile" });
+      return;
+    }
 
-  const userInfo = (await userInfoResponse.json()) as {
-    sub?: string;
-    preferred_username?: string;
-    name?: string;
-  };
+    const userInfo = (await userInfoResponse.json()) as {
+      sub?: string;
+      preferred_username?: string;
+      name?: string;
+    };
 
-  if (!userInfo.sub) {
-    response
-      .status(502)
-      .json({ error: "OAuth profile did not include a subject" });
-    return;
-  }
+    if (!userInfo.sub) {
+      response
+        .status(502)
+        .json({ error: "OAuth profile did not include a subject" });
+      return;
+    }
 
-  const preferredUsername =
-    userInfo.preferred_username ?? userInfo.name ?? userInfo.sub;
-  const savedUser = await ensureUser(userInfo.sub, preferredUsername);
-  await ensureDefaultList(savedUser.id);
+    const preferredUsername =
+      userInfo.preferred_username ?? userInfo.name ?? userInfo.sub;
+    const savedUser = await ensureUser(userInfo.sub, preferredUsername);
+    await ensureDefaultList(savedUser.id);
 
-  const token = signAuthToken({
-    userId: savedUser.id,
-    username: savedUser.username,
-  });
+    const token = signAuthToken({
+      userId: savedUser.id,
+      username: savedUser.username,
+    });
 
-  response.clearCookie("want-to-go-oauth-state", { path: "/" });
-  response.clearCookie("want-to-go-oauth-verifier", { path: "/" });
-  response.redirect(
-    `${getRequiredEnv("FRONTEND_URL")}/auth/callback#token=${encodeURIComponent(token)}`,
-  );
-});
+    response.clearCookie("want-to-go-oauth-state", { path: "/" });
+    response.clearCookie("want-to-go-oauth-verifier", { path: "/" });
+    response.redirect(
+      `${getRequiredEnv("FRONTEND_URL")}/auth/callback#token=${encodeURIComponent(token)}`,
+    );
+  },
+);
 
 authRouter.get("/me", async (request, response) => {
   const authorizationHeader = request.headers.authorization;

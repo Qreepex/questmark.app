@@ -1,5 +1,6 @@
 import { and, eq, inArray, desc } from "drizzle-orm";
 import { Router, type RequestHandler } from "express";
+import type { z } from "zod";
 import { db } from "../db/client.js";
 import { images, places, type Place } from "../db/schema.js";
 import {
@@ -11,6 +12,12 @@ import {
 import { cleanUpOrphanedImages } from "../lib/images.js";
 import type { AuthenticatedRequest } from "../lib/request.js";
 import { requireAuth } from "../middleware/require-auth.js";
+import { validate } from "../middleware/validate.js";
+import {
+  createPlaceBodySchema,
+  updatePlaceBodySchema,
+  uuidParamSchema,
+} from "../lib/validation-schemas.js";
 import { extractOwnImageKey, resolveImageDisplayUrl } from "../lib/s3.js";
 import { getPlaceTags, getTagsForPlaces, normalizeTags, setPlaceTags } from "../lib/tags.js";
 import { getPlaceVisits, getVisitsForPlaces } from "../lib/visits.js";
@@ -156,15 +163,6 @@ const getPlaceById: RequestHandler = async (request, response) => {
   response.json({ place: withDetails(await resolvePlaceImages(place), tags, visits) });
 };
 
-function normalizeCountryCode(value: unknown): string | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim().toUpperCase();
-  return trimmed.length === 2 ? trimmed : null;
-}
-
 const createPlace: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
   const {
@@ -179,40 +177,7 @@ const createPlace: RequestHandler = async (request, response) => {
     listId,
     countryCode,
     tags,
-  } = request.body as {
-    name?: unknown;
-    latitude?: unknown;
-    longitude?: unknown;
-    description?: unknown;
-    imageUrls?: unknown;
-    socialUrls?: unknown;
-    imageUrl?: unknown;
-    socialLink?: unknown;
-    listId?: unknown;
-    countryCode?: unknown;
-    tags?: unknown;
-  };
-
-  const parsedLatitude =
-    typeof latitude === "string" ? Number(latitude) : latitude;
-  const parsedLongitude =
-    typeof longitude === "string" ? Number(longitude) : longitude;
-
-  if (
-    typeof name !== "string" ||
-    !name.trim() ||
-    typeof parsedLatitude !== "number" ||
-    Number.isNaN(parsedLatitude) ||
-    typeof parsedLongitude !== "number" ||
-    Number.isNaN(parsedLongitude) ||
-    typeof listId !== "string" ||
-    !listId
-  ) {
-    response
-      .status(400)
-      .json({ error: "Name, latitude, longitude, and listId are required" });
-    return;
-  }
+  } = request.body as z.infer<typeof createPlaceBodySchema>;
 
   const access = await getListAccess(authRequest.authUser.userId, listId);
 
@@ -226,11 +191,11 @@ const createPlace: RequestHandler = async (request, response) => {
     .values({
       userId: authRequest.authUser.userId,
       listId,
-      name: name.trim(),
-      latitude: parsedLatitude,
-      longitude: parsedLongitude,
-      description: typeof description === "string" ? description.trim() : null,
-      countryCode: normalizeCountryCode(countryCode),
+      name,
+      latitude,
+      longitude,
+      description: description ?? null,
+      countryCode: countryCode ?? null,
       imageUrls:
         (await normalizeImageUrls(imageUrls ?? imageUrl, authRequest.authUser.userId)) ??
         null,
@@ -261,19 +226,7 @@ const updatePlace: RequestHandler = async (request, response) => {
     listId,
     countryCode,
     tags,
-  } = request.body as {
-    name?: unknown;
-    latitude?: unknown;
-    longitude?: unknown;
-    description?: unknown;
-    imageUrls?: unknown;
-    socialUrls?: unknown;
-    imageUrl?: unknown;
-    socialLink?: unknown;
-    listId?: unknown;
-    countryCode?: unknown;
-    tags?: unknown;
-  };
+  } = request.body as z.infer<typeof updatePlaceBodySchema>;
 
   const existingPlace = await db.query.places.findFirst({
     where: eq(places.id, placeId),
@@ -293,7 +246,7 @@ const updatePlace: RequestHandler = async (request, response) => {
 
   let nextListId = existingPlace.listId;
 
-  if (typeof listId === "string" && listId && listId !== existingPlace.listId) {
+  if (listId !== undefined && listId !== existingPlace.listId) {
     const targetAccess = await getListAccess(authRequest.authUser.userId, listId);
 
     if (!targetAccess || !canCreateInList(targetAccess.role)) {
@@ -313,29 +266,11 @@ const updatePlace: RequestHandler = async (request, response) => {
     .update(places)
     .set({
       listId: nextListId,
-      name: typeof name === "string" ? name.trim() : existingPlace.name,
-      latitude:
-        typeof latitude === "string"
-          ? Number(latitude)
-          : typeof latitude === "number" && !Number.isNaN(latitude)
-            ? latitude
-            : existingPlace.latitude,
-      longitude:
-        typeof longitude === "string"
-          ? Number(longitude)
-          : typeof longitude === "number" && !Number.isNaN(longitude)
-            ? longitude
-            : existingPlace.longitude,
-      description:
-        description === undefined
-          ? existingPlace.description
-          : typeof description === "string"
-            ? description.trim()
-            : null,
-      countryCode:
-        countryCode === undefined
-          ? existingPlace.countryCode
-          : normalizeCountryCode(countryCode),
+      name: name ?? existingPlace.name,
+      latitude: latitude ?? existingPlace.latitude,
+      longitude: longitude ?? existingPlace.longitude,
+      description: description === undefined ? existingPlace.description : description,
+      countryCode: countryCode === undefined ? existingPlace.countryCode : countryCode,
       imageUrls: nextImageUrls,
       socialUrls:
         socialUrls === undefined && socialLink === undefined
@@ -388,9 +323,13 @@ const deletePlace: RequestHandler = async (request, response) => {
 };
 
 placesRouter.get("/", listPlaces);
-placesRouter.get("/:id", getPlaceById);
-placesRouter.post("/", createPlace);
-placesRouter.patch("/:id", updatePlace);
-placesRouter.delete("/:id", deletePlace);
+placesRouter.get("/:id", validate({ params: uuidParamSchema }), getPlaceById);
+placesRouter.post("/", validate({ body: createPlaceBodySchema }), createPlace);
+placesRouter.patch(
+  "/:id",
+  validate({ params: uuidParamSchema, body: updatePlaceBodySchema }),
+  updatePlace,
+);
+placesRouter.delete("/:id", validate({ params: uuidParamSchema }), deletePlace);
 
 export default placesRouter;

@@ -53,7 +53,6 @@ const nominatimProvider: GeocodeProvider = {
     searchUrl.searchParams.set("limit", "8");
     searchUrl.searchParams.set("q", query);
 
-    console.debug("Nominatim search URL:", searchUrl.toString());
     const res = await fetch(searchUrl, { headers: USER_AGENT_HEADERS });
     if (!res.ok) throw new Error(`Nominatim error ${res.status}`);
 
@@ -78,7 +77,6 @@ const nominatimProvider: GeocodeProvider = {
     reverseUrl.searchParams.set("lat", String(latitude));
     reverseUrl.searchParams.set("lon", String(longitude));
 
-    console.debug("Nominatim reverse URL:", reverseUrl.toString());
     const res = await fetch(reverseUrl, { headers: USER_AGENT_HEADERS });
     if (!res.ok) throw new Error(`Nominatim error ${res.status}`);
 
@@ -107,7 +105,6 @@ const photonProvider: GeocodeProvider = {
     searchUrl.searchParams.set("q", query);
     searchUrl.searchParams.set("limit", "8");
 
-    console.debug("Photon search URL:", searchUrl.toString());
     const res = await fetch(searchUrl);
     if (!res.ok) throw new Error(`Photon error ${res.status}`);
 
@@ -140,7 +137,6 @@ const photonProvider: GeocodeProvider = {
     reverseUrl.searchParams.set("lat", String(latitude));
     reverseUrl.searchParams.set("lon", String(longitude));
 
-    console.debug("Photon reverse URL:", reverseUrl.toString());
     const res = await fetch(reverseUrl);
     if (!res.ok) throw new Error(`Photon error ${res.status}`);
 
@@ -205,7 +201,6 @@ const geoapifyProvider: GeocodeProvider = {
     searchUrl.searchParams.set("limit", "8");
     searchUrl.searchParams.set("apiKey", apiKey);
 
-    console.debug("Geoapify search URL:", searchUrl.toString());
     const res = await fetch(searchUrl);
     if (!res.ok) throw new Error(`Geoapify error ${res.status}`);
 
@@ -235,7 +230,6 @@ const geoapifyProvider: GeocodeProvider = {
     reverseUrl.searchParams.set("format", "json");
     reverseUrl.searchParams.set("apiKey", apiKey);
 
-    console.debug("Geoapify reverse URL:", reverseUrl.toString());
     const res = await fetch(reverseUrl);
     if (!res.ok) throw new Error(`Geoapify error ${res.status}`);
 

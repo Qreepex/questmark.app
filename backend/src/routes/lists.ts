@@ -1,22 +1,25 @@
 import { and, eq } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { Router, type RequestHandler } from "express";
+import type { z } from "zod";
 import { db } from "../db/client.js";
-import { listMembers, listMemberRoleEnum, lists, places, users } from "../db/schema.js";
+import { listMembers, lists, places, users } from "../db/schema.js";
 import { cleanUpOrphanedImages } from "../lib/images.js";
 import { getListAccess, type ListAccessRole } from "../lib/list-access.js";
 import type { AuthenticatedRequest } from "../lib/request.js";
 import { requireAuth } from "../middleware/require-auth.js";
+import { validate } from "../middleware/validate.js";
+import {
+  listNameBodySchema,
+  shareRoleBodySchema,
+  shareTokenParamSchema,
+  uuidAndUserIdParamSchema,
+  uuidParamSchema,
+} from "../lib/validation-schemas.js";
 
 const listsRouter = Router();
 
 listsRouter.use(requireAuth);
-
-const shareRoles = listMemberRoleEnum.enumValues;
-
-function isShareRole(value: unknown): value is (typeof shareRoles)[number] {
-  return typeof value === "string" && (shareRoles as readonly string[]).includes(value);
-}
 
 const listLists: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
@@ -54,16 +57,11 @@ const listLists: RequestHandler = async (request, response) => {
 
 const createList: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
-  const { name } = request.body as { name?: unknown };
-
-  if (typeof name !== "string" || !name.trim()) {
-    response.status(400).json({ error: "Name is required" });
-    return;
-  }
+  const { name } = request.body as z.infer<typeof listNameBodySchema>;
 
   const [createdList] = await db
     .insert(lists)
-    .values({ ownerId: authRequest.authUser.userId, name: name.trim() })
+    .values({ ownerId: authRequest.authUser.userId, name })
     .returning();
 
   response.status(201).json({
@@ -82,12 +80,7 @@ const createList: RequestHandler = async (request, response) => {
 const renameList: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
   const listId = request.params.id as string;
-  const { name } = request.body as { name?: unknown };
-
-  if (typeof name !== "string" || !name.trim()) {
-    response.status(400).json({ error: "Name is required" });
-    return;
-  }
+  const { name } = request.body as z.infer<typeof listNameBodySchema>;
 
   const access = await getListAccess(authRequest.authUser.userId, listId);
 
@@ -98,7 +91,7 @@ const renameList: RequestHandler = async (request, response) => {
 
   const [updatedList] = await db
     .update(lists)
-    .set({ name: name.trim() })
+    .set({ name })
     .where(eq(lists.id, listId))
     .returning();
 
@@ -203,12 +196,7 @@ const removeListMember: RequestHandler = async (request, response) => {
 const setShareLink: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
   const listId = request.params.id as string;
-  const { role } = request.body as { role?: unknown };
-
-  if (!isShareRole(role)) {
-    response.status(400).json({ error: "role must be one of view, add, edit" });
-    return;
-  }
+  const { role } = request.body as z.infer<typeof shareRoleBodySchema>;
 
   const access = await getListAccess(authRequest.authUser.userId, listId);
 
@@ -303,13 +291,29 @@ const joinList: RequestHandler = async (request, response) => {
 };
 
 listsRouter.get("/", listLists);
-listsRouter.post("/", createList);
-listsRouter.post("/join/:token", joinList);
-listsRouter.patch("/:id", renameList);
-listsRouter.delete("/:id", deleteList);
-listsRouter.get("/:id/members", listMembersHandler);
-listsRouter.delete("/:id/members/:userId", removeListMember);
-listsRouter.post("/:id/share", setShareLink);
-listsRouter.delete("/:id/share", revokeShareLink);
+listsRouter.post("/", validate({ body: listNameBodySchema }), createList);
+listsRouter.post("/join/:token", validate({ params: shareTokenParamSchema }), joinList);
+listsRouter.patch(
+  "/:id",
+  validate({ params: uuidParamSchema, body: listNameBodySchema }),
+  renameList,
+);
+listsRouter.delete("/:id", validate({ params: uuidParamSchema }), deleteList);
+listsRouter.get(
+  "/:id/members",
+  validate({ params: uuidParamSchema }),
+  listMembersHandler,
+);
+listsRouter.delete(
+  "/:id/members/:userId",
+  validate({ params: uuidAndUserIdParamSchema }),
+  removeListMember,
+);
+listsRouter.post(
+  "/:id/share",
+  validate({ params: uuidParamSchema, body: shareRoleBodySchema }),
+  setShareLink,
+);
+listsRouter.delete("/:id/share", validate({ params: uuidParamSchema }), revokeShareLink);
 
 export default listsRouter;

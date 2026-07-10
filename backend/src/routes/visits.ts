@@ -1,40 +1,21 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { Router, type RequestHandler } from "express";
+import type { z } from "zod";
 import { db } from "../db/client.js";
 import { places, visits } from "../db/schema.js";
 import { getAccessibleListIds, getListAccess } from "../lib/list-access.js";
 import type { AuthenticatedRequest } from "../lib/request.js";
 import { requireAuth } from "../middleware/require-auth.js";
+import { validate } from "../middleware/validate.js";
+import {
+  createVisitBodySchema,
+  updateVisitBodySchema,
+  uuidParamSchema,
+} from "../lib/validation-schemas.js";
 
 const visitsRouter = Router();
 
 visitsRouter.use(requireAuth);
-
-function normalizeVisitedAt(value: unknown): string | null {
-  if (typeof value !== "string" || !value.trim()) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return value.trim();
-}
-
-function normalizeNotes(value: unknown): string | null | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  if (typeof value !== "string" || !value.trim()) {
-    return null;
-  }
-
-  return value.trim();
-}
 
 const listVisits: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
@@ -72,18 +53,9 @@ const listVisits: RequestHandler = async (request, response) => {
 
 const createVisit: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
-  const { placeId, visitedAt, notes } = request.body as {
-    placeId?: unknown;
-    visitedAt?: unknown;
-    notes?: unknown;
-  };
-
-  const normalizedVisitedAt = normalizeVisitedAt(visitedAt);
-
-  if (typeof placeId !== "string" || !placeId || !normalizedVisitedAt) {
-    response.status(400).json({ error: "placeId and visitedAt are required" });
-    return;
-  }
+  const { placeId, visitedAt, notes } = request.body as z.infer<
+    typeof createVisitBodySchema
+  >;
 
   const place = await db.query.places.findFirst({
     where: eq(places.id, placeId),
@@ -106,8 +78,8 @@ const createVisit: RequestHandler = async (request, response) => {
     .values({
       placeId,
       userId: authRequest.authUser.userId,
-      visitedAt: normalizedVisitedAt,
-      notes: normalizeNotes(notes) ?? null,
+      visitedAt,
+      notes: notes ?? null,
     })
     .returning();
 
@@ -117,7 +89,7 @@ const createVisit: RequestHandler = async (request, response) => {
 const updateVisit: RequestHandler = async (request, response) => {
   const authRequest = request as AuthenticatedRequest;
   const visitId = request.params.id as string;
-  const { visitedAt, notes } = request.body as { visitedAt?: unknown; notes?: unknown };
+  const { visitedAt, notes } = request.body as z.infer<typeof updateVisitBodySchema>;
 
   const existingVisit = await db.query.visits.findFirst({
     where: eq(visits.id, visitId),
@@ -128,21 +100,11 @@ const updateVisit: RequestHandler = async (request, response) => {
     return;
   }
 
-  const nextVisitedAt =
-    visitedAt === undefined ? existingVisit.visitedAt : normalizeVisitedAt(visitedAt);
-
-  if (!nextVisitedAt) {
-    response.status(400).json({ error: "visitedAt is invalid" });
-    return;
-  }
-
-  const nextNotes = normalizeNotes(notes);
-
   const [updatedVisit] = await db
     .update(visits)
     .set({
-      visitedAt: nextVisitedAt,
-      notes: nextNotes === undefined ? existingVisit.notes : nextNotes,
+      visitedAt: visitedAt ?? existingVisit.visitedAt,
+      notes: notes === undefined ? existingVisit.notes : notes,
     })
     .where(eq(visits.id, existingVisit.id))
     .returning();
@@ -169,8 +131,12 @@ const deleteVisit: RequestHandler = async (request, response) => {
 };
 
 visitsRouter.get("/", listVisits);
-visitsRouter.post("/", createVisit);
-visitsRouter.patch("/:id", updateVisit);
-visitsRouter.delete("/:id", deleteVisit);
+visitsRouter.post("/", validate({ body: createVisitBodySchema }), createVisit);
+visitsRouter.patch(
+  "/:id",
+  validate({ params: uuidParamSchema, body: updateVisitBodySchema }),
+  updateVisit,
+);
+visitsRouter.delete("/:id", validate({ params: uuidParamSchema }), deleteVisit);
 
 export default visitsRouter;
