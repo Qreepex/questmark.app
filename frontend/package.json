@@ -40,6 +40,7 @@
 		"wrangler": "^4.110.0"
 	},
 	"dependencies": {
+		"chart.js": "^4.5.1",
 		"flag-icons": "^7.5.0"
 	}
 }

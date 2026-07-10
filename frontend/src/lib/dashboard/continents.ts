@@ -272,3 +272,9 @@ export function getContinent(countryCode: string | null | undefined): string | n
 
 	return COUNTRY_TO_CONTINENT[countryCode.toUpperCase()] ?? null;
 }
+
+export function getCountriesInContinent(continentCode: string): string[] {
+	return Object.entries(COUNTRY_TO_CONTINENT)
+		.filter(([, continent]) => continent === continentCode)
+		.map(([country]) => country);
+}

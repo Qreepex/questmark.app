@@ -3,3 +3,4 @@
 ## Missing Features
 
 - Themes
+- Social Embeds

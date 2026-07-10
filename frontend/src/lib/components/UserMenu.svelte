@@ -62,6 +62,13 @@
 			>
 				Manage lists
 			</button>
+			<a
+				href="/app/wrapped"
+				onclick={() => (open = false)}
+				class="mt-2 flex w-full items-center justify-center rounded-xl bg-white/5 px-4 py-2.5 text-sm text-(--text) transition hover:bg-white/8"
+			>
+				Your Wrapped
+			</a>
 			<button
 				onclick={signOut}
 				class="mt-2 flex w-full items-center justify-center rounded-xl bg-white/5 px-4 py-2.5 text-sm text-(--text) transition hover:bg-white/8"
