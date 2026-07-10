@@ -7,12 +7,6 @@
 	<section
 		class="max-w-3xl rounded-3xl border border-(--border) bg-(--surface) p-8 shadow-2xl shadow-black/40 md:p-12"
 	>
-		<div
-			class="inline-flex items-center gap-2 rounded-full border border-(--border) px-3 py-1 text-xs text-(--muted)"
-		>
-			<span class="h-1.5 w-1.5 rounded-full bg-(--accent)"></span>
-			Want To Go
-		</div>
 		<h1 class="mt-6 max-w-2xl text-4xl font-semibold tracking-tight text-(--text) md:text-6xl">
 			Save your next trip on a map, not in a notes app.
 		</h1>

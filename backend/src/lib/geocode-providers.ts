@@ -3,8 +3,8 @@ import { throttle } from "./throttle.js";
 import { NominatimAddress, UnifiedGeocodeResult } from "./types.js";
 
 const USER_AGENT_HEADERS = {
-  "user-agent": "WantToGo/1.0 (https://go.schiemann.work)",
-  Referer: "https://go.schiemann.work",
+  "user-agent": "questmark.app/1.0 (https://questmark.app)",
+  Referer: "https://questmark.app",
 };
 
 // Each provider is a courtesy-hosted public API (no API key) - keep calls to

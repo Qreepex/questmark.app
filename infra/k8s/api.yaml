@@ -12,7 +12,7 @@ data:
   NODE_ENV: "production"
   PORT: "3001"
   # Must match wherever the frontend (Cloudflare Worker) is actually served from.
-  FRONTEND_URL: "https://go.schiemann.work"
+  FRONTEND_URL: "https://questmark.app"
   AWS_REGION: "eu-central-3"
   S3_ENDPOINT: "https://s3.eu-central-3.ionoscloud.com"
   S3_BUCKET_NAME: "want-to-go"
@@ -96,10 +96,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - go-api.schiemann.work
-      secretName: schiemann-work
+        - api.questmark.app
+      secretName: questmark-tls
   rules:
-    - host: go-api.schiemann.work
+    - host: api.questmark.app
       http:
         paths:
           - path: /
