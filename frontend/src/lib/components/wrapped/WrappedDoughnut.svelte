@@ -3,7 +3,7 @@
 	import { getContinentColor } from '$lib/dashboard/chartColors';
 	import type { NamedCountEntry } from '$lib/dashboard/wrapped';
 	import type { Chart as ChartType, ChartConfiguration } from 'chart.js';
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy } from 'svelte';
 
 	let { title, data } = $props<{
 		title: string;
@@ -57,18 +57,12 @@
 			}
 		};
 
-		if (chart) {
-			chart.data = config.data;
-			chart.update();
-			return;
-		}
-
+		// Destroying and recreating (rather than mutating chart.data in place)
+		// avoids Chart.js staleness when the number of slices changes between
+		// filter selections.
+		chart?.destroy();
 		chart = new Chart(canvas, config);
 	}
-
-	onMount(() => {
-		void render();
-	});
 
 	onDestroy(() => {
 		chart?.destroy();
@@ -77,9 +71,7 @@
 	$effect(() => {
 		data;
 
-		if (chart) {
-			void render();
-		}
+		void render();
 	});
 </script>
 

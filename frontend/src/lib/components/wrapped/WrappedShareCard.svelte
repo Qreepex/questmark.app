@@ -1,9 +1,10 @@
 <script lang="ts">
 	import Button from '$lib/components/ui/Button.svelte';
 	import Panel from '$lib/components/ui/Panel.svelte';
-	import { CATEGORICAL } from '$lib/dashboard/chartColors';
 	import { siteName } from '$lib/config/site';
+	import { CATEGORICAL } from '$lib/dashboard/chartColors';
 	import type { WrappedStats } from '$lib/dashboard/wrapped';
+	import type { PlaceRecord } from '$lib/types';
 	import { onMount } from 'svelte';
 
 	let { year, stats } = $props<{
@@ -18,6 +19,9 @@
 	const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';
 
 	let canvas = $state<HTMLCanvasElement | null>(null);
+	// Normalized (0..1) equirectangular-projected country outlines, loaded once
+	// and reused as a faint backdrop behind the card content.
+	let worldRings: number[][][] | null = null;
 	let isWorking = $state(false);
 	let errorMessage = $state('');
 
@@ -127,6 +131,109 @@
 		ctx.fill();
 	}
 
+	async function loadWorldMap(): Promise<void> {
+		try {
+			const response = await fetch('/world-countries.geojson');
+			const geojson = await response.json();
+			const rings: number[][][] = [];
+
+			for (const feature of geojson.features ?? []) {
+				const geometry = feature.geometry;
+
+				// Antarctica's outline in this dataset includes a closing edge
+				// running the full -180..180 longitude range at a near-polar
+				// latitude, which renders as a stray straight line across the
+				// bottom of the map — drop it rather than special-case it.
+				if (!geometry || feature.properties?.iso_a2 === 'AQ') {
+					continue;
+				}
+
+				const polygons =
+					geometry.type === 'Polygon'
+						? [geometry.coordinates]
+						: geometry.type === 'MultiPolygon'
+							? geometry.coordinates
+							: [];
+
+				for (const polygon of polygons) {
+					const exterior = polygon[0];
+
+					// Skip tiny islands/slivers and decimate remaining points —
+					// this is a decorative backdrop, not a precise map.
+					if (!exterior || exterior.length < 24) {
+						continue;
+					}
+
+					const ring: number[][] = [];
+
+					for (let i = 0; i < exterior.length; i += 4) {
+						const [lon, lat] = exterior[i];
+						ring.push([(lon + 180) / 360, (90 - lat) / 180]);
+					}
+
+					if (ring.length >= 6) {
+						rings.push(ring);
+					}
+				}
+			}
+
+			worldRings = rings;
+			draw();
+		} catch (error) {
+			console.error('Failed to load world map outline', error);
+		}
+	}
+
+	function drawWorldMap(
+		ctx: CanvasRenderingContext2D,
+		rings: number[][][],
+		places: PlaceRecord[],
+		mapX: number,
+		mapY: number,
+		mapWidth: number,
+		mapHeight: number
+	): void {
+		ctx.save();
+		ctx.strokeStyle = 'rgba(244, 239, 230, 0.18)';
+		ctx.lineWidth = 2;
+		ctx.lineJoin = 'round';
+
+		for (const ring of rings) {
+			ctx.beginPath();
+
+			ring.forEach(([xNorm, yNorm], index) => {
+				const x = mapX + xNorm * mapWidth;
+				const y = mapY + yNorm * mapHeight;
+
+				if (index === 0) {
+					ctx.moveTo(x, y);
+				} else {
+					ctx.lineTo(x, y);
+				}
+			});
+
+			ctx.closePath();
+			ctx.stroke();
+		}
+
+		for (const place of places) {
+			const x = mapX + ((place.longitude + 180) / 360) * mapWidth;
+			const y = mapY + ((90 - place.latitude) / 180) * mapHeight;
+
+			ctx.beginPath();
+			ctx.fillStyle = hexToRgba(CATEGORICAL[6], 0.45);
+			ctx.arc(x, y, 16, 0, Math.PI * 2);
+			ctx.fill();
+
+			ctx.beginPath();
+			ctx.fillStyle = 'rgba(244, 239, 230, 0.95)';
+			ctx.arc(x, y, 6, 0, Math.PI * 2);
+			ctx.fill();
+		}
+
+		ctx.restore();
+	}
+
 	function drawInfoBadge(
 		ctx: CanvasRenderingContext2D,
 		x: number,
@@ -184,7 +291,7 @@
 		// Header: mark + wordmark (left), year badge (right) — all centered on
 		// one shared headerCenterY so they align by construction, not CSS.
 		const iconSize = 64;
-		let cursorY = 110;
+		let cursorY = 70;
 		const headerCenterY = cursorY + iconSize / 2;
 
 		ctx.fillStyle = '#262626';
@@ -207,14 +314,21 @@
 		const badgeWidth = ctx.measureText(heading).width + badgePaddingX * 2;
 		const badgeX = WIDTH - marginX - badgeWidth;
 		ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
-		roundRect(ctx, badgeX, headerCenterY - badgeHeight / 2, badgeWidth, badgeHeight, badgeHeight / 2);
+		roundRect(
+			ctx,
+			badgeX,
+			headerCenterY - badgeHeight / 2,
+			badgeWidth,
+			badgeHeight,
+			badgeHeight / 2
+		);
 		ctx.fill();
 		ctx.fillStyle = '#f4efe6';
 		ctx.textAlign = 'center';
 		ctx.fillText(heading, badgeX + badgeWidth / 2, headerCenterY);
 		ctx.textAlign = 'left';
 
-		cursorY = headerCenterY + iconSize / 2 + 130;
+		cursorY = headerCenterY + iconSize / 2 + 100;
 
 		// Hero number
 		const heroText = String(stats.totalPlacesVisited);
@@ -223,7 +337,7 @@
 		ctx.fillStyle = '#f4efe6';
 		ctx.textBaseline = 'top';
 		ctx.fillText(heroText, marginX, cursorY);
-		cursorY += heroSize * 1.05 + 26;
+		cursorY += heroSize * 1.05 + 20;
 
 		ctx.font = `500 34px ${FONT}`;
 		ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
@@ -235,7 +349,7 @@
 			cursorY += 46;
 		}
 
-		cursorY += 60;
+		cursorY += 30;
 
 		// Info badges
 		const badgeGap = 24;
@@ -271,7 +385,7 @@
 			'MOST VISITED PLACE',
 			stats.mostVisitedPlace?.place.name ?? '—'
 		);
-		cursorY += infoBadgeHeight + 100;
+		cursorY += infoBadgeHeight + 60;
 
 		// Top countries mini bar chart
 		if (topCountries.length > 0) {
@@ -279,9 +393,9 @@
 			ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
 			ctx.textBaseline = 'top';
 			ctx.fillText('TOP COUNTRIES', marginX, cursorY);
-			cursorY += 60;
+			cursorY += 50;
 
-			const rowHeight = 70;
+			const rowHeight = 60;
 
 			topCountries.forEach((entry: { code: string; count: number }, index: number) => {
 				const rowCenterY = cursorY + rowHeight / 2;
@@ -313,8 +427,20 @@
 			});
 		}
 
-		// Footer
+		// Faint world map, confined to the space below the top-countries list
+		// (so it doesn't compete visually with the stats above it).
 		const footerY = HEIGHT - 80;
+
+		if (worldRings) {
+			const mapTop = 1300;
+			const mapBottom = footerY + 50;
+
+			if (mapBottom > mapTop) {
+				drawWorldMap(ctx, worldRings, stats.visitedPlaces, 0, mapTop, WIDTH, mapBottom - mapTop);
+			}
+		}
+
+		// Footer
 		ctx.font = `500 26px ${FONT}`;
 		ctx.textBaseline = 'middle';
 		ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
@@ -327,6 +453,7 @@
 
 	onMount(() => {
 		draw();
+		void loadWorldMap();
 	});
 
 	$effect(() => {
