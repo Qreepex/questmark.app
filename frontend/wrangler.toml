@@ -4,8 +4,10 @@ compatibility_date = "2026-07-09"
 # Static-assets-only Worker: the app is a client-rendered SPA (see +layout.ts,
 # ssr = false), so no Worker script is needed to render anything. Cloudflare
 # serves the prebuilt files directly and falls back to index.html for
-# unmatched paths (e.g. /lists/join/<token>) so client-side routing can
-# take over.
+# unmatched paths (e.g. /lists/join/<token>, /auth/callback) so client-side
+# routing can take over. `/` is deliberately not prerendered (see
+# vite.config.ts) so that fallback index.html is a plain SPA shell rather
+# than landing-page content.
 [assets]
 directory = "./build"
 not_found_handling = "single-page-application"

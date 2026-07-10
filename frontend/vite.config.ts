@@ -30,15 +30,21 @@ export default defineConfig({
 			// `fallback` page handles dynamic routes like /lists/join/[token] client-side.
 			// See https://svelte.dev/docs/kit/single-page-apps
 			//
-			// `/`, `/privacy`, and `/legal-notice` are prerendered (see their +page.ts
-			// files) so crawlers get real og:*/twitter:* meta without running JS. The
-			// fallback is named `200.html` (unused by Cloudflare) instead of `index.html`
-			// so that prerendering doesn't get clobbered by the SPA fallback file -
-			// Cloudflare's `single-page-application` not_found_handling always serves the
-			// real (prerendered) `index.html` for unmatched routes, which still works as
-			// an SPA shell for client-rendered routes like /app.
+			// `/privacy` and `/legal-notice` are prerendered (see their +page.ts files)
+			// so crawlers get real og:*/twitter:* meta without running JS. `/` is
+			// intentionally NOT prerendered, even though it'd be nice for SEO too:
+			// Cloudflare's `single-page-application` not_found_handling always serves
+			// `index.html` verbatim for unmatched routes (there's no way to point it at
+			// a differently-named fallback instead). If `/` were prerendered,
+			// `index.html` would contain a hydration payload for the landing page, and
+			// any hard-loaded route that isn't its own static file (e.g. /auth/callback,
+			// reached via an external OAuth redirect) would hydrate as the landing page
+			// instead of routing to the real component. Keeping `/` client-rendered like
+			// everything else means the fallback (named `index.html`, the adapter
+			// default) is a plain SPA shell, so it always lands on the correct
+			// client-side route regardless of which path it's served for.
 			adapter: adapter({
-				fallback: '200.html'
+				fallback: 'index.html'
 			}),
 
 			// Emit absolute (root-relative) asset paths instead of the default
