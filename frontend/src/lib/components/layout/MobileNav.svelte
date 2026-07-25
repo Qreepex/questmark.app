@@ -7,12 +7,26 @@
 		sheetOpen?: boolean;
 	}>();
 
+	let searchActive = $state(false);
+
 	function selectTab(tab: 'want-to-go' | 'been'): void {
+		searchActive = false;
+
 		if (placeFilters.visited === tab && sheetOpen) {
 			sheetOpen = false;
 			return;
 		}
 		placeFilters.visited = tab;
+		sheetOpen = true;
+	}
+
+	function toggleSearch(): void {
+		if (sheetOpen && searchActive) {
+			sheetOpen = false;
+			searchActive = false;
+			return;
+		}
+		searchActive = true;
 		sheetOpen = true;
 	}
 </script>
@@ -24,7 +38,7 @@
 		type="button"
 		onclick={() => selectTab('want-to-go')}
 		class="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium transition {placeFilters.visited ===
-			'want-to-go' && sheetOpen
+			'want-to-go'
 			? 'text-(--accent-strong)'
 			: 'text-(--muted)'}"
 	>
@@ -37,7 +51,7 @@
 		type="button"
 		onclick={() => selectTab('been')}
 		class="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium transition {placeFilters.visited ===
-			'been' && sheetOpen
+			'been'
 			? 'text-(--accent-strong)'
 			: 'text-(--muted)'}"
 	>
@@ -49,9 +63,10 @@
 	</button>
 	<button
 		type="button"
-		onclick={() => (sheetOpen = !sheetOpen)}
+		onclick={toggleSearch}
 		aria-label="Search"
-		class="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium transition {sheetOpen
+		class="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium transition {searchActive &&
+		sheetOpen
 			? 'text-(--accent-strong)'
 			: 'text-(--muted)'}"
 	>

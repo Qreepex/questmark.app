@@ -54,10 +54,10 @@
 	{#if open}
 		<div
 			bind:this={panel}
-			class="absolute right-0 w-64 rounded-2xl border border-(--border) bg-(--surface-floating) p-3 shadow-xl shadow-black/40 backdrop-blur-md {placement ===
+			class="w-64 max-w-[calc(100vw-2rem)] rounded-2xl border border-(--border) bg-(--surface-floating) p-3 shadow-xl shadow-black/40 backdrop-blur-md {placement ===
 			'above'
-				? 'bottom-full mb-3'
-				: 'mt-3'}"
+				? 'fixed right-4 bottom-[calc(4rem+env(safe-area-inset-bottom)+0.5rem)] z-1000'
+				: 'absolute right-0 mt-3'}"
 		>
 			<p class="px-2 text-xs text-(--muted-dim)">Signed in as</p>
 			<div
