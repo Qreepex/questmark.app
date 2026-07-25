@@ -31,12 +31,22 @@
 	let map: import('leaflet').Map | null = null;
 	let markerLayer: import('leaflet').LayerGroup | null = null;
 	let countryLayer: import('leaflet').GeoJSON | null = null;
+	let tileLayer: import('leaflet').TileLayer | null = null;
 	let leafletModule: typeof import('leaflet') | null = null;
 	let lastFocusedPlace: PlaceRecord | null = null;
 	let countriesGeoJson: object | null = null;
 
+	function tileUrlFor(isLight: boolean): string {
+		return `https://{s}.basemaps.cartocdn.com/${isLight ? 'light_all' : 'dark_all'}/{z}/{x}/{y}{r}.png`;
+	}
+
 	onMount(() => {
 		let active = true;
+		const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+		const handleColorSchemeChange = (event: MediaQueryListEvent) => {
+			tileLayer?.setUrl(tileUrlFor(event.matches));
+		};
+		colorSchemeQuery.addEventListener('change', handleColorSchemeChange);
 
 		const initializeMap = async () => {
 			leafletModule = await import('leaflet');
@@ -55,8 +65,8 @@
 					maxBoundsViscosity: 1.0
 				})
 				.setView([20, 0], 2);
-			leafletModule
-				.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+			tileLayer = leafletModule
+				.tileLayer(tileUrlFor(colorSchemeQuery.matches), {
 					attribution: `&copy; OpenStreetMap contributors &copy; CARTO | Geocoding: <a href="https://nominatim.openstreetmap.org" target="_blank" rel="noopener noreferrer">Nominatim</a>, <a href="https://photon.komoot.io" target="_blank" rel="noopener noreferrer">Photon</a>, <a href="https://www.geoapify.com" target="_blank" rel="noopener noreferrer">Geoapify</a> | <a href="https://github.com/qreepex/want-to-go/commit/${__COMMIT_HASH__}" target="_blank" rel="noopener noreferrer">${__COMMIT_HASH__}</a>`,
 					subdomains: 'abcd',
 					maxZoom: 20
@@ -76,10 +86,12 @@
 
 		return () => {
 			active = false;
+			colorSchemeQuery.removeEventListener('change', handleColorSchemeChange);
 			map?.remove();
 			map = null;
 			markerLayer = null;
 			countryLayer = null;
+			tileLayer = null;
 		};
 	});
 

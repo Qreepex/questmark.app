@@ -2,32 +2,27 @@
 	import UserMenu from '$lib/components/UserMenu.svelte';
 	import { placeFilters } from '$lib/state/placeFilters.svelte';
 
-	let { sheetOpen = $bindable(false) } = $props<{
-		/** Whether the mobile bottom sheet (search + places list) is expanded. */
-		sheetOpen?: boolean;
+	let { placesOpen = $bindable(false), searchOpen = $bindable(false) } = $props<{
+		/** Whether the mobile places/timeline sheet is expanded. */
+		placesOpen?: boolean;
+		/** Whether the mobile search sheet is expanded. */
+		searchOpen?: boolean;
 	}>();
 
-	let searchActive = $state(false);
-
 	function selectTab(tab: 'want-to-go' | 'been'): void {
-		searchActive = false;
+		searchOpen = false;
 
-		if (placeFilters.visited === tab && sheetOpen) {
-			sheetOpen = false;
+		if (placeFilters.visited === tab && placesOpen) {
+			placesOpen = false;
 			return;
 		}
 		placeFilters.visited = tab;
-		sheetOpen = true;
+		placesOpen = true;
 	}
 
 	function toggleSearch(): void {
-		if (sheetOpen && searchActive) {
-			sheetOpen = false;
-			searchActive = false;
-			return;
-		}
-		searchActive = true;
-		sheetOpen = true;
+		placesOpen = false;
+		searchOpen = !searchOpen;
 	}
 </script>
 
@@ -65,8 +60,7 @@
 		type="button"
 		onclick={toggleSearch}
 		aria-label="Search"
-		class="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium transition {searchActive &&
-		sheetOpen
+		class="flex flex-1 flex-col items-center justify-center gap-0.5 text-xs font-medium transition {searchOpen
 			? 'text-(--accent-strong)'
 			: 'text-(--muted)'}"
 	>
