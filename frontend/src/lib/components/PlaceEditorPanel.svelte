@@ -147,7 +147,7 @@
 
 {#if placeEditor.selection}
 	<div
-		class="pointer-events-auto fixed bottom-4 left-4 right-4 z-1000 sm:left-auto sm:right-6 sm:w-96"
+		class="pointer-events-auto fixed bottom-[calc(4rem+env(safe-area-inset-bottom)+0.5rem)] left-4 right-4 z-1000 sm:bottom-6 sm:left-auto sm:right-6 sm:w-96"
 		onpaste={handlePaste}
 	>
 		<Panel floating>

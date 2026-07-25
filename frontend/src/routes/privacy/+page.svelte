@@ -25,8 +25,8 @@
 				<h2 class="text-lg font-semibold text-(--text)">1. Who we are</h2>
 				<p class="text-sm text-(--muted) md:text-base">
 					{siteName} is operated by Ben Schiemann. If you have questions about this policy or your
-					data, contact <a href="mailto:ai@qreepex.xyz" class="text-(--accent-strong) underline"
-						>ai@qreepex.xyz</a
+					data, contact <a href="mailto:dev@qreepex.xyz" class="text-(--accent-strong) underline"
+						>dev@qreepex.xyz</a
 					>. Full operator details are on the
 					<a href="/legal-notice" class="underline">Legal Notice</a> page.
 				</p>
@@ -73,8 +73,8 @@
 				<p class="text-sm text-(--muted) md:text-base">
 					Your account and place data are kept for as long as your account exists. To request
 					deletion of your account and all associated data, contact <a
-						href="mailto:ai@qreepex.xyz"
-						class="text-(--accent-strong) underline">ai@qreepex.xyz</a
+						href="mailto:dev@qreepex.xyz"
+						class="text-(--accent-strong) underline">dev@qreepex.xyz</a
 					>.
 				</p>
 			</section>

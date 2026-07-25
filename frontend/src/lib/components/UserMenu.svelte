@@ -4,6 +4,13 @@
 	import { session } from '$lib/state/session.svelte';
 	import { onMount } from 'svelte';
 
+	let { placement = 'below', compact = false } = $props<{
+		/** Which side of the trigger button the dropdown opens toward. */
+		placement?: 'below' | 'above';
+		/** Smaller trigger button, for tight spaces like the mobile nav bar. */
+		compact?: boolean;
+	}>();
+
 	let open = $state(false);
 	let button = $state<HTMLButtonElement | null>(null);
 	let panel = $state<HTMLDivElement | null>(null);
@@ -37,7 +44,9 @@
 	<button
 		bind:this={button}
 		onclick={() => (open = !open)}
-		class="grid h-11 w-11 place-items-center rounded-full border border-(--border) bg-(--surface-floating) text-sm font-semibold text-(--text) shadow-xl shadow-black/40 backdrop-blur-md transition hover:border-(--border-strong)"
+		class="grid place-items-center rounded-full border border-(--border) bg-(--surface-floating) font-semibold text-(--text) shadow-xl shadow-black/40 backdrop-blur-md transition hover:border-(--border-strong) {compact
+			? 'h-8 w-8 text-xs'
+			: 'h-11 w-11 text-sm'}"
 		aria-label="Open account menu"
 	>
 		{getUserInitial(session.user?.username)}
@@ -45,7 +54,10 @@
 	{#if open}
 		<div
 			bind:this={panel}
-			class="absolute right-0 mt-3 w-64 rounded-2xl border border-(--border) bg-(--surface-floating) p-3 shadow-xl shadow-black/40 backdrop-blur-md"
+			class="absolute right-0 w-64 rounded-2xl border border-(--border) bg-(--surface-floating) p-3 shadow-xl shadow-black/40 backdrop-blur-md {placement ===
+			'above'
+				? 'bottom-full mb-3'
+				: 'mt-3'}"
 		>
 			<p class="px-2 text-xs text-(--muted-dim)">Signed in as</p>
 			<div

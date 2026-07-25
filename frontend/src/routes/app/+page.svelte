@@ -3,6 +3,7 @@
 	import ListManagerModal from '$lib/components/ListManagerModal.svelte';
 	import Login from '$lib/components/Login.svelte';
 	import FloatingStack from '$lib/components/layout/FloatingStack.svelte';
+	import MobileNav from '$lib/components/layout/MobileNav.svelte';
 	import PageShell from '$lib/components/layout/PageShell.svelte';
 	import MapSearchPanel from '$lib/components/MapSearchPanel.svelte';
 	import PlaceEditorPanel from '$lib/components/PlaceEditorPanel.svelte';
@@ -24,6 +25,7 @@
 	import { onMount } from 'svelte';
 
 	let showTimeline = $state(false);
+	let mobileSheetOpen = $state(false);
 
 	const visitedCountryCodes = $derived([
 		...new Set(visitsStore.items.map((visit) => visit.place.countryCode).filter(Boolean))
@@ -31,6 +33,12 @@
 
 	onMount(() => {
 		void initDashboard();
+	});
+
+	$effect(() => {
+		if (placeViewer.place || placeEditor.selection) {
+			mobileSheetOpen = false;
+		}
 	});
 </script>
 
@@ -53,7 +61,7 @@
 
 		<StatusToast />
 
-		<FloatingStack side="left">
+		<FloatingStack side="left" bind:open={mobileSheetOpen}>
 			<MapSearchPanel />
 			{#if placeFilters.visited === 'been'}
 				<div
@@ -87,7 +95,7 @@
 		</FloatingStack>
 
 		<div
-			class="pointer-events-auto fixed right-4 top-4 z-1000 flex items-center gap-2 sm:right-6 sm:top-6"
+			class="pointer-events-auto fixed right-4 top-4 z-1000 hidden items-center gap-2 sm:flex sm:right-6 sm:top-6"
 		>
 			<ViewModeToggle />
 			<UserMenu />
@@ -95,5 +103,6 @@
 		<PlaceEditorPanel />
 		<PlaceViewerPanel />
 		<ListManagerModal />
+		<MobileNav bind:sheetOpen={mobileSheetOpen} />
 	</PageShell>
 {/if}
