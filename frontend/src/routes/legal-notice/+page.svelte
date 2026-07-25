@@ -10,6 +10,7 @@
 	<div class="w-full max-w-3xl">
 		<nav class="mb-6 flex items-center gap-4 text-sm text-(--muted)">
 			<a href="/" class="hover:text-(--text)">&larr; Back to {siteName}</a>
+			<a href="/faq" class="hover:text-(--text)">FAQ</a>
 			<a href="/privacy" class="hover:text-(--text)">Privacy Policy</a>
 		</nav>
 

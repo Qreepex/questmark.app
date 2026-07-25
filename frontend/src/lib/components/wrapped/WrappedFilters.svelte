@@ -20,15 +20,25 @@
 		label: continent.name
 	}));
 
-	const tagOptions = $derived(getAllTags(places).map((tag: string) => ({ value: tag, label: tag })));
+	const tagOptions = $derived(
+		getAllTags(places).map((tag: string) => ({ value: tag, label: tag }))
+	);
 </script>
 
 <Panel floating class="flex flex-wrap items-end gap-3">
 	<div class="min-w-40 flex-1">
-		<MultiSelect label="Countries" bind:value={wrappedFilters.countryCodes} options={countryOptions} />
+		<MultiSelect
+			label="Countries"
+			bind:value={wrappedFilters.countryCodes}
+			options={countryOptions}
+		/>
 	</div>
 	<div class="min-w-40 flex-1">
-		<MultiSelect label="Continents" bind:value={wrappedFilters.continents} options={continentOptions} />
+		<MultiSelect
+			label="Continents"
+			bind:value={wrappedFilters.continents}
+			options={continentOptions}
+		/>
 	</div>
 	<div class="min-w-40 flex-1">
 		<MultiSelect label="Tags" bind:value={wrappedFilters.tags} options={tagOptions} />

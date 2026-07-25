@@ -218,15 +218,13 @@ const createPlace: RequestHandler = async (request, response) => {
   const normalizedTags = normalizeTags(tags);
   await setPlaceTags(createdPlace.id, normalizedTags);
 
-  response
-    .status(201)
-    .json({
-      place: withDetails(
-        await resolvePlaceImages(createdPlace),
-        normalizedTags,
-        [],
-      ),
-    });
+  response.status(201).json({
+    place: withDetails(
+      await resolvePlaceImages(createdPlace),
+      normalizedTags,
+      [],
+    ),
+  });
 };
 
 const updatePlace: RequestHandler = async (request, response) => {

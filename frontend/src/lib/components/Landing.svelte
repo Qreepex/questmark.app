@@ -62,8 +62,8 @@
 				{tagline}
 			</h1>
 			<p class="mt-4 max-w-xl text-base text-(--muted) md:text-lg">
-				{siteName} is where you collect the places worth chasing - search for them, drop a pin, and
-				keep notes, photos, and links right where you’ll actually see them again.
+				{siteName} is where you collect the places worth chasing - search for them, drop a pin, and keep
+				notes, photos, and links right where you’ll actually see them again.
 			</p>
 			<div class="mt-8 flex flex-wrap gap-3">
 				<Button onclick={beginLogin}>Get started - it’s free</Button>
@@ -147,6 +147,7 @@
 		>
 			<span>&copy; {new Date().getFullYear()} {siteName}</span>
 			<div class="flex gap-4">
+				<a href="/faq" class="hover:text-(--text)">FAQ</a>
 				<a href="/privacy" class="hover:text-(--text)">Privacy Policy</a>
 				<a href="/legal-notice" class="hover:text-(--text)">Legal Notice</a>
 			</div>

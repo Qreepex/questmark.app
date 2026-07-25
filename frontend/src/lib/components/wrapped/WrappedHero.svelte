@@ -27,7 +27,9 @@
 	</div>
 
 	{#if availableYears.length > 0}
-		<div class="flex flex-wrap gap-1.5 rounded-full border border-(--border) bg-(--surface-floating) p-1.5 text-sm shadow-xl shadow-black/40 backdrop-blur-md w-fit">
+		<div
+			class="flex flex-wrap gap-1.5 rounded-full border border-(--border) bg-(--surface-floating) p-1.5 text-sm shadow-xl shadow-black/40 backdrop-blur-md w-fit"
+		>
 			<button
 				type="button"
 				onclick={() => wrappedFilters.setYear('all')}

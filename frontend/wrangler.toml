@@ -1,13 +1,14 @@
 name = "questmark-app"
 compatibility_date = "2026-07-09"
+compatibility_flags = ["nodejs_compat"]
+main = "./build/_worker.js"
 
-# Static-assets-only Worker: the app is a client-rendered SPA (see +layout.ts,
-# ssr = false), so no Worker script is needed to render anything. Cloudflare
-# serves the prebuilt files directly and falls back to index.html for
-# unmatched paths (e.g. /lists/join/<token>, /auth/callback) so client-side
-# routing can take over. `/` is deliberately not prerendered (see
-# vite.config.ts) so that fallback index.html is a plain SPA shell rather
-# than landing-page content.
+# Real Worker deploy (adapter-cloudflare): marketing/SEO routes are prerendered
+# to static HTML and served straight from `assets`; everything else (the
+# authenticated app, /auth/callback, /lists/join/[token]) is routed through
+# the Worker itself, which matches the real SvelteKit route tree - so unknown
+# paths get a genuine 404 instead of always falling back to index.html.
 [assets]
 directory = "./build"
-not_found_handling = "single-page-application"
+binding = "ASSETS"
+not_found_handling = "404-page"

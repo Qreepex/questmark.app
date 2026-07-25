@@ -10,6 +10,7 @@
 	<div class="w-full max-w-3xl">
 		<nav class="mb-6 flex items-center gap-4 text-sm text-(--muted)">
 			<a href="/" class="hover:text-(--text)">&larr; Back to {siteName}</a>
+			<a href="/faq" class="hover:text-(--text)">FAQ</a>
 			<a href="/legal-notice" class="hover:text-(--text)">Legal Notice</a>
 		</nav>
 
@@ -24,8 +25,9 @@
 			<section class="space-y-2">
 				<h2 class="text-lg font-semibold text-(--text)">1. Who we are</h2>
 				<p class="text-sm text-(--muted) md:text-base">
-					{siteName} is operated by Ben Schiemann. If you have questions about this policy or your
-					data, contact <a href="mailto:dev@qreepex.xyz" class="text-(--accent-strong) underline"
+					{siteName} is operated by Ben Schiemann. If you have questions about this policy or your data,
+					contact
+					<a href="mailto:dev@qreepex.xyz" class="text-(--accent-strong) underline"
 						>dev@qreepex.xyz</a
 					>. Full operator details are on the
 					<a href="/legal-notice" class="underline">Legal Notice</a> page.
@@ -35,9 +37,9 @@
 			<section class="space-y-2">
 				<h2 class="text-lg font-semibold text-(--text)">2. Account &amp; sign-in</h2>
 				<p class="text-sm text-(--muted) md:text-base">
-					{siteName} uses OAuth-based sign-in. We only store an account ID and username &mdash; we
-					never collect or store your email address or a password. Your session is authenticated
-					with a token stored in your browser's local storage.
+					{siteName} uses OAuth-based sign-in. We only store an account ID and username &mdash; we never
+					collect or store your email address or a password. Your session is authenticated with a token
+					stored in your browser's local storage.
 				</p>
 			</section>
 

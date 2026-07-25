@@ -1,7 +1,12 @@
 <script lang="ts">
 	import Panel from '$lib/components/ui/Panel.svelte';
 
-	let { value, label, sublabel, color = '#c2673f' } = $props<{
+	let {
+		value,
+		label,
+		sublabel,
+		color = '#c2673f'
+	} = $props<{
 		value: string | number;
 		label: string;
 		sublabel?: string;

@@ -3,3 +3,5 @@ User-agent: *
 Disallow: /app
 Disallow: /auth/callback
 Disallow: /lists/join/
+
+Sitemap: https://questmark.app/sitemap.xml

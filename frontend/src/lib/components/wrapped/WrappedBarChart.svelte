@@ -37,9 +37,8 @@
 			return;
 		}
 
-		const { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip } = await import(
-			'chart.js'
-		);
+		const { Chart, BarController, BarElement, CategoryScale, LinearScale, Tooltip } =
+			await import('chart.js');
 		Chart.register(BarController, BarElement, CategoryScale, LinearScale, Tooltip);
 
 		// A newer render() call may have started (and possibly already

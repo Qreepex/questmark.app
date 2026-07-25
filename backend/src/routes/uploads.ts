@@ -53,11 +53,9 @@ const enforceUploadQuota: RequestHandler = async (request, response, next) => {
     .where(eq(images.userId, authRequest.authUser.userId));
 
   if (imageCount >= MAX_IMAGES_PER_USER) {
-    response
-      .status(403)
-      .json({
-        error: `You can only store up to ${MAX_IMAGES_PER_USER} images`,
-      });
+    response.status(403).json({
+      error: `You can only store up to ${MAX_IMAGES_PER_USER} images`,
+    });
     return;
   }
 

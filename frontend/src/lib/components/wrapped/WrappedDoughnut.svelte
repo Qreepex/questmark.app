@@ -18,7 +18,9 @@
 	// canvas.
 	let renderToken = 0;
 
-	const total = $derived(data.reduce((sum: number, entry: NamedCountEntry) => sum + entry.count, 0));
+	const total = $derived(
+		data.reduce((sum: number, entry: NamedCountEntry) => sum + entry.count, 0)
+	);
 
 	async function render(): Promise<void> {
 		const token = ++renderToken;
