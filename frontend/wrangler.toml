@@ -6,9 +6,17 @@ main = "./build/_worker.js"
 # Real Worker deploy (adapter-cloudflare): marketing/SEO routes are prerendered
 # to static HTML and served straight from `assets`; everything else (the
 # authenticated app, /auth/callback, /lists/join/[token]) is routed through
-# the Worker itself, which matches the real SvelteKit route tree - so unknown
-# paths get a genuine 404 instead of always falling back to index.html.
+# the Worker itself, which matches the real SvelteKit route tree and renders a
+# proper 404 page for unknown paths.
+#
+# IMPORTANT: keep `not_found_handling = "none"`. With "404-page" (or
+# "single-page-application"), the static-assets tier handles top-level
+# navigations (`Sec-Fetch-Mode: navigate`) that miss every asset BY ITSELF and
+# never invokes the Worker - so browser navigations to Worker-routed paths like
+# /auth/callback (the OAuth redirect target!) or a hard refresh of /app get a
+# 404 even though the route exists. "none" always forwards misses to the
+# Worker, which serves the SvelteKit-rendered 404 page for true misses anyway.
 [assets]
 directory = "./build"
 binding = "ASSETS"
-not_found_handling = "404-page"
+not_found_handling = "none"
