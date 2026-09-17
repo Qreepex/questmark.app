@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { PUBLIC_CARTO_API_KEY } from '$env/static/public';
 	import type { PlaceRecord } from '$lib/types';
 	import 'leaflet/dist/leaflet.css';
 	import { onMount } from 'svelte';
@@ -37,7 +38,7 @@
 	let countriesGeoJson: object | null = null;
 
 	function tileUrlFor(isLight: boolean): string {
-		return `https://{s}.basemaps.cartocdn.com/${isLight ? 'light_all' : 'dark_all'}/{z}/{x}/{y}{r}.png`;
+		return `https://{s}.basemaps.cartocdn.com/${isLight ? 'light_all' : 'dark_all'}/{z}/{x}/{y}{r}.png?key=${PUBLIC_CARTO_API_KEY}`;
 	}
 
 	onMount(() => {
